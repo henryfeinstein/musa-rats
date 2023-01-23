@@ -11,7 +11,7 @@
 #####
 
 #### Kate: 
-##### Created project plan
-##### Added datafile legend 
-##### Started contingency planning ideas
-##### Researched additional rats-related features and identified datasets 
+Created project plan
+Added datafile legend 
+Started contingency planning ideas
+Researched additional rats-related features and identified datasets 
