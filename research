@@ -1,0 +1,27 @@
+### RATS RESEARCH 
+Business/use case: incorporate more spatial features and processes while replying less on 311 data to determine likelihood of rat infestation on a given city block 
+Environmental factors from DC Lab Report
+•	Denser human population – units per buildings/block?
+•	Poorly secured food waste 
+•	Restaurants
+•	Mix of residential and commercial zoning 
+•	Water access 
+•	Impervious surfaces
+•	Community gardens
+•	Alleyway conditions
+•	Building conditions/vacancy
+•	Older buildings
+•	Sewer grates 
+•	Construction -> permits 
+•	Seasonal effects? (311 requests vary by season, but research from other cities suggest that rodent populations do not vary seasonally) 
+  o	Milder winters, more warmer days -> more rats 
+
+Additional variables to consider adding 
+•	311 requests related to:
+  o	missed trash pick-ups 
+  o	alley clean up requests 
+  o	Do we want to include 311 data at all?
+  o	https://opendata.dc.gov/datasets/DCGIS::311-city-service-requests-in-2018/explore?location=40.002872%2C-78.566946%2C8.31&showTable=true 
+•	Street usage level (assuming rats would stick to less busy roads/alleys?) : https://opendata.dc.gov/datasets/DCGIS::roadway-functional-classification-1/explore?location=38.915389%2C-77.006631%2C14.92 
+•	Illegal dumping 
+•	Proximity to nearest rat sighting? -> would require 311 data
