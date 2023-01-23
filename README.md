@@ -5,10 +5,13 @@
 
 ### Weekly Updates 
 #### Eric: 
-#####
+
 
 #### Henry:
-#####
+
 
 #### Kate: 
-#####
+Created project plan <br>
+Added datafile legend <br>
+Started contingency planning ideas <br>
+Researched additional rats-related features and identified datasets <br>
