@@ -8,7 +8,8 @@
 
 
 #### Henry:
-
+Created polygons representing city blocks (geographically defined, as opposed to Census blocks) from DC's street centerlines dataset <br>
+Joined rat inspection point-level dataset to city blocks to create potential unit of analysis <br>
 
 #### Kate: 
 Created project plan <br>
