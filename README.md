@@ -4,6 +4,8 @@
 #### [Plan](https://docs.google.com/spreadsheets/d/1nGroyO_JdxYuPIOrizUDo5iwkxVdH8Emu9CW2ZeOraM/edit?usp=sharing): schedule, tasks, datafile names, and contingency ideas 
 
 ### Weekly Updates 
+
+### Week 1
 #### Eric: 
 Created Rmd file and loaded some libraries and multi-source data <br>
 Some data wrangling work, checked the text mining logic, which is very sound and well-developed <br>
