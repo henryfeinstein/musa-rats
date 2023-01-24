@@ -5,7 +5,9 @@
 
 ### Weekly Updates 
 #### Eric: 
-
+Created Rmd file and loaded some libraries and multi-source data <br>
+Some data wrangling work, checked the text mining logic, which is very sound and well-developed <br>
+Checked that if event-based data is later than inspection dates, that can’t be used
 
 #### Henry:
 Created polygons representing city blocks (geographically defined, as opposed to Census blocks) from DC's street centerlines dataset <br>
