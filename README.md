@@ -6,19 +6,19 @@
 ### Weekly Updates 
 ### Week 1 (1/17-1/23)
 #### Eric: 
-Created Rmd file and loaded some libraries and multi-source data <br>
-Some data wrangling work, checked the text mining logic, which is very sound and well-developed <br>
-Checked that if event-based data is later than inspection dates, that can’t be used
+<br>
+<br>
+
 
 #### Henry:
-Created polygons representing city blocks (geographically defined, as opposed to Census blocks) from DC's street centerlines dataset <br>
-Joined rat inspection point-level dataset to city blocks to create potential unit of analysis <br>
+<br>
+<br>
 
 #### Kate: 
-Created project plan <br>
-Added datafile legend <br>
-Started contingency planning ideas <br>
-Researched additional rats-related features and identified datasets <br>
+<br>
+<br>
+<br>
+<br>
 
 ### Weekly Tasks 
 ### Week 2 (1/24 - 1/30) 
