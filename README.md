@@ -13,8 +13,9 @@ Visualize the distribution in DC of the two types issues.<br>
 
 
 #### Henry:
-<br>
-<br>
+Explored the spatial distribution of rat inspection and observation data at the city block and ward level<br>
+Calculated new variables to examine distribution of inspections and rat evidence based on population and 311 call volume <br>
+Created initial visualizations of major trends<br>
 
 #### Kate: 
 Built out exploratory analysis plan/tasks <br>
