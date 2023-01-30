@@ -4,7 +4,7 @@
 #### [Plan](https://docs.google.com/spreadsheets/d/1nGroyO_JdxYuPIOrizUDo5iwkxVdH8Emu9CW2ZeOraM/edit?usp=sharing): schedule, tasks, datafile names, and contingency ideas 
 
 ### Weekly Updates 
-### Week 1 (1/24-1/30)
+### Week 2 (1/24-1/30)
 #### Eric: 
 <br>
 <br>
@@ -19,7 +19,7 @@ Built out exploratory analysis plan/tasks <br>
 Identified datasets DC Lab used for environmental factors and imported updated points/polygons of these datesets <br>
 Expored these datasets and make visuals using new city blocks
 
-### Weekly Tasks 
+### Weekly Tasks (Updated after class meeting)
 ### Week 2 (1/24 - 1/30) 
 Henry - Exploratory analysis: 311 data -> rats by blocks, 311 requests by blocks, rat 311 requests by blocks, etc. <br>
 Eric - Exploratory analysis: Look into 311 service types and relationships with rat infestation points  <br>
