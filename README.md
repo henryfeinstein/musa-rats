@@ -4,7 +4,7 @@
 #### [Plan](https://docs.google.com/spreadsheets/d/1nGroyO_JdxYuPIOrizUDo5iwkxVdH8Emu9CW2ZeOraM/edit?usp=sharing): schedule, tasks, datafile names, and contingency ideas 
 
 ### Weekly Updates 
-### Week 1 (1/17-1/23)
+### Week 1 (1/24-1/30)
 #### Eric: 
 <br>
 <br>
@@ -15,10 +15,9 @@
 <br>
 
 #### Kate: 
-<br>
-<br>
-<br>
-<br>
+Built out exploratory analysis plan/tasks <br>
+Identified datasets DC Lab used for environmental factors and imported updated points/polygons of these datesets <br>
+Expored these datasets and make visuals using new city blocks
 
 ### Weekly Tasks 
 ### Week 2 (1/24 - 1/30) 
