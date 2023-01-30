@@ -6,8 +6,10 @@
 ### Weekly Updates 
 ### Week 2 (1/24-1/30)
 #### Eric: 
-<br>
-<br>
+Explored original 311 report data, find 11 types of reports may be useful to our project, reclassified them into two categories: Trash issues and Infrastructure issues.<br>
+Visualize the number of two types issues based on month, find that from June to September, trash issues number is obviously higher than any other months, which may be related to the high temperature, so we should take temperature into consideration.<br>
+Visualize the distribution in DC of the two types issues.<br>
+
 
 
 #### Henry:
