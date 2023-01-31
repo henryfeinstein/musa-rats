@@ -56,7 +56,7 @@ library(ggplot2)
 library(stargazer)
 library(XML)
 library(data.table)
-library(ggpmisc)
+# library(ggpmisc)
 library(patchwork)
 library(spatstat)
 library(raster)
@@ -345,8 +345,8 @@ Rats <- read.csv("./data/rats_to_blocks.csv.gz", header = TRUE) %>%
          year = year(ymd_hms(SERVICEORDERDATE)))
   
 
-
-Data311_16 <- st_read("./data/311_City_Service_Requests_in_2016.geojson") %>%
+Data311_16 <- st_read("C:/Users/henry/Documents/HFdocs/Penn/Spring_2023/MUSA7900_Practicum/311_City_Service_Requests_in_2016.geojson") %>% 
+# Data311_16 <- st_read("./data/311_City_Service_Requests_in_2016.geojson") %>%
   st_transform('ESRI:102685') %>%
   filter(SERVICECODEDESCRIPTION == "Alley Cleaning" | SERVICECODEDESCRIPTION == "Curb and Gutter Repair" | SERVICECODEDESCRIPTION == "DOEE - Nuisance Odor Complaints" | SERVICECODEDESCRIPTION == "DOEE - General Environmental Concerns" | SERVICECODEDESCRIPTION == "Dead Animal Collection" | SERVICECODEDESCRIPTION == "Illegal Dumping" | SERVICECODEDESCRIPTION == "Pothole" | SERVICECODEDESCRIPTION == "Sanitation Enforcement" | SERVICECODEDESCRIPTION == "Street Cleaning" | SERVICECODEDESCRIPTION == "Trash Collection - Missed" | SERVICECODEDESCRIPTION == "Yard Waste - Missed") %>%
   dplyr::select(SERVICECODEDESCRIPTION, SERVICEORDERDATE, INSPECTIONDATE, LATITUDE, LONGITUDE, WARD) %>%
@@ -416,7 +416,7 @@ const_permits_all <- rbind(const_permits15, const_permits16) %>%
 #   st_transform('ESRI:102685')
 
 ## Public Trash Cans
-trash_cans <- read.csv("./data/Litter_Cans.csv", header = TRUE) %>%
+trash_cans <- read_csv("./data/Litter_Cans.csv") %>%
   st_as_sf(., coords = c("X", "Y"), crs = 4326, agr = "constant") %>%
   st_transform('ESRI:102685')
 
@@ -429,7 +429,7 @@ dc_parks <- st_read("./data/Parks_and_Recreation_Areas.geojson") %>%
   st_transform('ESRI:102685')
 
 ## Sidewalk Grates (Sewer)
-sewer_grates <- read.csv("./data/Sidewalk_Grates_2019.csv", header = TRUE) %>%
+sewer_grates <- read_csv("./data/Sidewalk_Grates_2019.csv") %>%
   st_as_sf(., coords = c("X", "Y"), crs = 4326, agr = "constant") %>%
   st_transform('ESRI:102685')
 
