@@ -66,3 +66,77 @@ zoning <- st_read("C./data/Zoning_Regulations_of_2016.geojson") %>%
 ## Joining construction permits 
 const_permits_all <- rbind(const_permits15, const_permits16)
 const_permits.sf <- st_as_sf(const_permits_all, coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant")
+
+block_dat.sf = st_as_sf(block_dat)
+block_dat.sf <- st_transform(block_dat.sf, crs = 4326)
+trash_cans.sf <- st_transform(trash_cans.sf, crs = 4326)
+const_permits.sf <- st_transform(const_permits.sf, crs = 4326)
+comm_gardens.sf <- st_as_sf(comm_gardens) 
+comm_gardens.sf <- st_transform(comm_gardens.sf, crs= 4326)
+
+block_dat.sf <- block_dat %>%
+  mutate(block = st_area(geometry)) %>%
+  st_join(const_permits.sf) 
+
+## Intersection of blocks and feature points
+storm_drains.sf$block_id <- st_intersects(storm_drains.sf,block_dat.sf)
+sewer_grates.sf$block_id <- st_intersects(sewer_grates.sf,block_dat.sf)
+trash_cans.sf$block_id <- st_intersects(trash_cans.sf,block_dat.sf)
+const_permits.sf$block_id <- st_intersects(const_permits.sf,block_dat.sf)
+
+storm_block <-
+  storm_drains.sf %>%
+  group_by(block_id) %>%
+  summarize(count=n()) %>%
+  dplyr::filter(!grepl(':', block_id)) %>%
+ dplyr::filter(!grepl('integer', block_id)) %>%
+  st_drop_geometry() %>%
+  na.omit()
+
+sewer_block <-
+  sewer_grates.sf %>%
+  group_by(block_id) %>%
+  summarize(count=n()) %>%
+  dplyr::filter(!grepl(':', block_id)) %>%
+ dplyr::filter(!grepl('integer', block_id)) %>%
+  st_drop_geometry() %>%
+  na.omit()
+
+trashcan_block <-
+  trash_cans.sf %>%
+  group_by(block_id) %>%
+  summarize(count=n()) %>%
+  dplyr::filter(!grepl(':', block_id)) %>%
+ dplyr::filter(!grepl('integer', block_id)) %>%
+  st_drop_geometry() %>%
+  na.omit()
+
+const_block <-
+  const_permits.sf %>%
+  group_by(block_id) %>%
+  summarize(count=n()) %>%
+  dplyr::filter(!grepl(':', block_id)) %>%
+ dplyr::filter(!grepl('integer', block_id)) %>%
+  st_drop_geometry() %>%
+  na.omit()
+
+block_dat.sf$storm_drain <- storm_block$count[match(block_dat.sf$block_id, storm_block$block_id)]
+block_dat.sf$sewer_grate <- sewer_block$count[match(block_dat.sf$block_id, sewer_block$block_id)]
+block_dat.sf$trash_can <- trashcan_block$count[match(block_dat.sf$block_id, trashcan_block$block_id)]
+block_dat.sf$const_permit <- const_block$count[match(block_dat.sf$block_id, const_block$block_id)]
+
+# storm drains by block 
+ggplot() + geom_sf(data = block_dat.sf, aes(fill = storm_drain), color = "transparent") +
+  labs(title = "Count of Storm Drains by Block")
+
+# sewer grates by block 
+ggplot() + geom_sf(data = block_dat.sf, aes(fill = sewer_grate), color = "transparent") +
+  labs(title = "Count of Sewer Grates by Block")
+
+# trash cans by block 
+ggplot() + geom_sf(data = block_dat.sf, aes(fill = trash_can), color = "transparent") +
+  labs(title = "Count of Public Trash Cans by Block")
+
+# construction permits (2015-2016) by block 
+ggplot() + geom_sf(data = block_dat.sf, aes(fill = const_permit), color = "transparent") +
+  labs(title = "Construction Permits by Block, 2015-2016")
