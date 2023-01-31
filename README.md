@@ -11,7 +11,6 @@ Visualize the number of two types issues based on month, find that from June to 
 Visualize the distribution in DC of the two types issues.<br>
 
 
-
 #### Henry:
 Explored the spatial distribution of rat inspection and observation data at the city block and ward level<br>
 Calculated new variables to examine distribution of inspections and rat evidence based on population and 311 call volume <br>
@@ -20,7 +19,8 @@ Created initial visualizations of major trends<br>
 #### Kate: 
 Built out exploratory analysis plan/tasks <br>
 Identified datasets DC Lab used for environmental factors and imported updated points/polygons of these datesets <br>
-Expored these datasets and make visuals using new city blocks
+Joined datasets to block data to find counts by our newly defined blocks <br>
+Expored the spatial distribution of env variables and made visuals using new city blocks
 
 ### Weekly Tasks (Updated after class meeting)
 ### Week 2 (1/24 - 1/30) 
