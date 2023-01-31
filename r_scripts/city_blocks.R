@@ -53,13 +53,16 @@ ggplot() + geom_sf(data = block_dat, aes(fill = inspection_count), color = "tran
 ggplot() + geom_sf(data = block_dat, aes(fill = rats_found_yn), color = "transparent")
 
 # count of rats found
-ggplot() + geom_sf(data = block_dat, aes(fill = rats_found_count), color = "transparent")
+ggplot() + geom_sf(data = block_dat, aes(fill = rats_found_count), color = "transparent") +
+  labs(title = "Number of Rats Found by Block")
 
 # rat id rate (count of rats found / number of inspections)
-ggplot() + geom_sf(data = block_dat, aes(fill = rats_found_count / inspection_count), color = "transparent")
+ggplot() + geom_sf(data = block_dat, aes(fill = rats_found_count / inspection_count), color = "transparent") +
+  labs(title = "Rat ID Rate (Count of Rats Found / Number of Inspections) \nby Block")
 
 # block size
-ggplot() + geom_sf(data = block_dat, aes(fill = area_acres), color = "transparent")
+ggplot() + geom_sf(data = block_dat, aes(fill = area_acres), color = "transparent") +
+  labs(title = "Block Size (Acres)")
 
 # distribution of block size
 ggplot() + geom_density(data = block_dat %>% filter(area_acres < 100), aes(area_acres))
@@ -68,7 +71,8 @@ ggplot() + geom_density(data = block_dat %>% filter(area_acres < 100), aes(area_
 ggplot() + geom_sf(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
                    aes(fill = inspections), color = "transparent") +
            geom_sf_text(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
-                     aes(label = ward_name))
+                     aes(label = ward_name)) +
+  labs(title = "Inspections by Ward")
 
 # inspections by ward bar chart
 ggplot() + geom_bar(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
@@ -82,14 +86,16 @@ ggplot() + geom_sf(data = block_dat %>%
                      mutate(rats_found_rate = rats_found_count / inspections),
                    aes(fill = rats_found_rate), color = "transparent") +
   geom_sf_text(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
-               aes(label = ward_name))
+               aes(label = ward_name)) +
+  labs(title = "Rat ID Rate by Ward")
 
 # inspections per person by ward
 ggplot() + geom_sf(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count),
                                                                           pop15 = first(ward_pop_15)),
                    aes(fill = inspections / pop15), color = "transparent") +
   geom_sf_text(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
-               aes(label = ward_name))
+               aes(label = ward_name)) +
+  labs(title = "Inspections/Person by Ward")
 
 # rats found per person by ward
 ggplot() + geom_sf(data = block_dat %>% 
@@ -100,4 +106,5 @@ ggplot() + geom_sf(data = block_dat %>%
                      mutate(rats_found_rate = rats_found_count / inspections),
                    aes(fill = rats_found_count / pop15), color = "transparent") +
   geom_sf_text(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
-               aes(label = ward_name))
+               aes(label = ward_name)) +
+  labs(title = "Rats Found/Person by Ward")
