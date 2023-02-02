@@ -23,8 +23,9 @@ Joined datasets to block data to find counts by our newly defined blocks <br>
 Expored the spatial distribution of env variables and made visuals using new city blocks
 
 ### Weekly Tasks (Updated after class meeting)
-### Week 2 (1/24 - 1/30) 
-Henry - Exploratory analysis: 311 data -> rats by blocks, 311 requests by blocks, rat 311 requests by blocks, etc. <br>
-Eric - Exploratory analysis: Look into 311 service types and relationships with rat infestation points  <br>
-Kate - Exploratory analysis: Import previous data in points + Update project management plan <br>
-All - make some visuals from your exploratory analysis and meet Monday (1/30) at 11:00 am on Zoom, plus think about hypotheses/assumptions and ways to account for seasonal changes. 
+### Week 3 (1/31 - 2/6)  
+Henry - Rat spatial variables <br>
+Eric - Other spatial variables (exposure to impervious surface, trash cans, etc.) <br>
+Kate - Population density, zoning, etc. variables and create slide deck for prepping midterm presentation <br>
+Everyone - think about narrative, work on correlation plots for your variables![image](https://user-images.githubusercontent.com/113199399/216359370-1d7b1521-10e7-480c-8da1-48cee15947cc.png)
+
