@@ -27,5 +27,5 @@ Expored the spatial distribution of env variables and made visuals using new cit
 Henry - Rat spatial variables <br>
 Eric - Other spatial variables (exposure to impervious surface, trash cans, etc.) <br>
 Kate - Population density, zoning, etc. variables and create slide deck for prepping midterm presentation <br>
-Everyone - think about narrative, work on correlation plots for your variables![image](https://user-images.githubusercontent.com/113199399/216359370-1d7b1521-10e7-480c-8da1-48cee15947cc.png)
+Everyone - think about narrative, work on correlation plots for your variables!
 
