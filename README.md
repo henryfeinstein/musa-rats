@@ -12,9 +12,9 @@ Created correlation plots for between rats count and related potential factors<b
 
 
 #### Henry:
-<br>
-<br>
-<br>
+Created nearest neighbor features for rat observations<br>
+create hotspot analysis variables for rat observations using a fishnet<br>
+plotted correlation at city block level for rat-related spatial variables<br>
 
 #### Kate: 
 Imported, joined, cleaned zoning and residential unit data <br>
