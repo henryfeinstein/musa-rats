@@ -4,7 +4,7 @@
 #### [Plan](https://docs.google.com/spreadsheets/d/1nGroyO_JdxYuPIOrizUDo5iwkxVdH8Emu9CW2ZeOraM/edit?usp=sharing): schedule, tasks, datafile names, and contingency ideas 
 
 ### Weekly Updates 
-### Week 2 (1/24-1/30)
+### Week 2 (2/6-2/13)
 #### Eric: 
 <br>
 <br>
@@ -17,9 +17,9 @@
 <br>
 
 #### Kate: 
-<br>
-<br>
-<br>
+Imported, joined, cleaned zoning and residential unit data <br>
+Created features for population density and zoning classes <br>
+Created correlation plots for numeric variables and zoning<br>
 
 
 ### Weekly Tasks (Updated after class meeting)
