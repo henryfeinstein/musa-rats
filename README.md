@@ -6,9 +6,8 @@
 ### Weekly Updates 
 ### Week 2 (2/6-2/13)
 #### Eric: 
-<br>
-<br>
-<br>
+Created Nearest neighbor features for transh cans, storm drains and sewer grates and plot them<br>
+Created correlation plots for between rats count and related potential factors<br>
 
 
 #### Henry:
