@@ -23,10 +23,10 @@ Created correlation plots for numeric variables and zoning<br>
 
 
 ### Weekly Tasks (Updated after class meeting)
-### Week 3 (1/31 - 2/6)  
-Henry - Create rat variables <br>
+### Week 3 (2/8 - 2/14)  
+Henry - Create rat variables and correlation plots <br>
 Eric - Set up preliminary model <br>
-Kate - Create zoning/density variables <br>
+Kate - Create zoning/density variables and correlation plots <br>
 Everyone - think about narrative and presentation (February 21) 
 
 #### Presentation
