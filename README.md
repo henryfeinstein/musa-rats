@@ -24,8 +24,12 @@ Created correlation plots for numeric variables and zoning<br>
 
 ### Weekly Tasks (Updated after class meeting)
 ### Week 3 (1/31 - 2/6)  
-Henry - Rat spatial variables <br>
-Eric - Other spatial variables (exposure to impervious surface, trash cans, etc.) <br>
-Kate - Population density, zoning, etc. variables and create slide deck for prepping midterm presentation <br>
-Everyone - think about narrative, work on correlation plots for your variables!
+Henry - Create rat variables <br>
+Eric - Set up preliminary model <br>
+Kate - Create zoning/density variables <br>
+Everyone - think about narrative and presentation (February 21) 
+
+#### Presentation
+Aim to have slides finished by 2/16
+Runthrough presentation on 2/20?
 
