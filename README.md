@@ -30,6 +30,6 @@ Kate - Create zoning/density variables <br>
 Everyone - think about narrative and presentation (February 21) 
 
 #### Presentation
-Aim to have slides finished by 2/16
+Aim to have slides finished by 2/16<br>
 Runthrough presentation on 2/20?
 
