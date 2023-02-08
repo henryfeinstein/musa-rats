@@ -30,6 +30,10 @@ const_permits15.sf <- st_as_sf(const_permits15, coords = c("LONGITUDE", "LATITUD
 const_permits16 <- read.csv("./data/Construction_Permits_in_2016.csv", header = TRUE)
 const_permits16.sf <- st_as_sf(const_permits16, coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant")
 
+## Construction Permits 2017
+const_permits17 <- read.csv("C:/Users/admin/OneDrive - PennO365/Desktop/801_Practicum/Construction_Permits_in_2017.csv", header = TRUE)
+const_permits17.sf <- st_as_sf(const_permits17, coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant")
+
 ## Impervious Surfaces 2015
 imp_surfaces <- st_read("./data/Impervious_Surface_2017.geojson") %>%
   st_transform('ESRI:102685')
@@ -64,7 +68,8 @@ zoning <- st_read("C./data/Zoning_Regulations_of_2016.geojson") %>%
 
 
 ## Joining construction permits 
-const_permits_all <- rbind(const_permits15, const_permits16)
+const_permits_1617 <- rbind(const_permits15, const_permits16)
+const_permits_all <- rbind(const_permits_1617, const_permits17)
 const_permits.sf <- st_as_sf(const_permits_all, coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant")
 
 block_dat.sf = st_as_sf(block_dat)
