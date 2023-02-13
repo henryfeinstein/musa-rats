@@ -17,9 +17,9 @@
 <br>
 
 #### Kate: 
-<br>
-<br>
-<br>
+feature engineering: created a variety of variables based on population density, zoning, built environment factors, and previous rat presence <br>
+correlation matrix of new variables <br>
+working on presentation 1 <br>
 
 
 ### Weekly Tasks (Updated after class meeting)
@@ -31,5 +31,6 @@ Everyone - think about narrative and presentation (February 21)
 
 #### Presentation
 Aim to have slides finished by 2/16<br>
+Polished markdown by 2/20? <br>
 Runthrough presentation on 2/20?
 
