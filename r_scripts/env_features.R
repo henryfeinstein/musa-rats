@@ -145,3 +145,83 @@ ggplot() + geom_sf(data = block_dat.sf, aes(fill = trash_can), color = "transpar
 # construction permits (2015-2016) by block 
 ggplot() + geom_sf(data = block_dat.sf, aes(fill = const_permit), color = "transparent") +
   labs(title = "Construction Permits by Block, 2015-2016")
+
+# feature engineering
+# zones that had rats most often (residential zone, residential flat zone, residential apt zone, and mixed use)
+block_dat.sf <- 
+  block_dat.sf %>% 
+  mutate(res_mixed_zone = ifelse(str_detect(block_dat.sf$zoning, "Residential_Zone|Residential_Flat_Zone|Residential_Apt_Zone|Mixed_Use"), 1, 0))
+
+# zoned for res/mixed use and had rats previously
+block_dat.sf$zone_rats <- ifelse(block_dat.sf$res_mixed_zone == 1 & block_dat.sf$rats_found_yn == 1, 1, 0)
+
+# zoned for res/mixed use and did not have rats previously 
+block_dat.sf$zone_no_rats <- ifelse(block_dat.sf$res_mixed_zone == 1 & block_dat.sf$rats_found_yn == 0, 1, 0)
+
+# less common rat zones and had rats previously 
+block_dat.sf$no_zone_rats <- ifelse(block_dat.sf$res_mixed_zone == 0 & block_dat.sf$rats_found_yn == 1, 1, 0)
+
+# less common rat zones and did not have rats previously 
+block_dat.sf$no_zone_no_rats <- ifelse(block_dat.sf$res_mixed_zone == 0 & block_dat.sf$rats_found_yn == 0, 1, 0)
+
+# pop density above average 
+block_dat.sf$high_pop <- ifelse(block_dat.sf$res_unit_count >= 172.48, 1, 0)
+
+
+# pop density above average and rats
+block_dat.sf$high_pop_rats <- ifelse(block_dat.sf$res_unit_count >= 172.48 & block_dat.sf$rats_found_yn == 1, 1, 0)
+
+# pop density above average and no rats
+block_dat.sf$high_pop_no_rats <- ifelse(block_dat.sf$res_unit_count >= 172.48 & block_dat.sf$rats_found_yn == 0, 1, 0)
+
+# pop density below average and rats
+block_dat.sf$low_pop_rats <- ifelse(block_dat.sf$res_unit_count <= 172.48 & block_dat.sf$rats_found_yn == 1, 1, 0)
+
+# pop density below average and no rats
+block_dat.sf$low_pop_no_rats <- ifelse(block_dat.sf$res_unit_count <= 172.48 & block_dat.sf$rats_found_yn == 0, 1, 0)
+
+# const permits above average and rats
+block_dat.sf$high_const_rats <- ifelse(block_dat.sf$const_permit >= 11 & block_dat.sf$rats_found_yn == 1, 1, 0)
+
+# const permits above average and no rats 
+block_dat.sf$high_const_no_rats <- ifelse(block_dat.sf$const_permit >= 11 & block_dat.sf$rats_found_yn == 0, 1, 0)
+
+# const permits below average and rats
+block_dat.sf$low_const_rats <- ifelse(block_dat.sf$const_permit <= 11 & block_dat.sf$rats_found_yn == 1, 1, 0)
+
+# const permits below average and no rats 
+block_dat.sf$low_const_no_rats <- ifelse(block_dat.sf$const_permit <= 11 & block_dat.sf$rats_found_yn == 0, 1, 0)
+
+# above average sewer grates
+block_dat.sf$high_sewer <- ifelse(block_dat.sf$sewer_grate >= 8.29, 1, 0)
+
+# above average storm drains
+block_dat.sf$high_storm <- ifelse(block_dat.sf$storm_drain >= 1.98, 1, 0)
+
+# above average sewer grates
+block_dat.sf$high_trash <- ifelse(block_dat.sf$trash_can >= 2.74, 1, 0)
+
+## above average sewer grates, storm drains, and const permits 
+block_dat.sf$high_sewer_storm_const <- ifelse(block_dat.sf$high_sewer == 1 & block_dat.sf$high_storm == 1 & block_dat.sf$high_trash == 1, 1, 0)
+
+# average residential unit count per block = 172.48 (median = 3)
+# average const permits count per block = 11.00 (median = 7)
+# average sewer grates count per block = 8.29 (median = 4) 
+# average storm drains count per block = 1.98 (median = 2)
+# average trash cans count per block = 2.74 (median = 2)
+
+#correlation matrix
+newVars <-
+  select_if(st_drop_geometry(block_dat.sf), is.numeric) %>% 
+  dplyr::select(-block_id, -rats_found_count, -ward_pop_15.x, -ward_pop_15.y, inspection_count, -area_acres, -storm_drain, -sewer_grate, -trash_can, -const_permit, -inspection_count) %>%
+  na.omit()
+
+ggcorrplot(
+  round(cor(newVars), 1),
+  p.mat = cor_pmat(newVars),
+  colors = c("#7fcdbb", "white", "#2c7fb8"),
+  type="lower",
+  insig = "blank") +  
+    labs(title = "Correlation across residential density, zoning, built env factors") +
+  theme(axis.text.x=element_text(size=rel(0.75), angle=45)) + 
+  theme(axis.text.y=element_text(size=rel(0.75)))
