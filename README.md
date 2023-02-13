@@ -7,19 +7,19 @@
 ### Weekly Updates 
 ### Week 2 (2/6-2/13)
 #### Eric: 
-Created Nearest neighbor features for transh cans, storm drains and sewer grates and plot them<br>
-Created correlation plots for between rats count and related potential factors<br>
+<br>
+<br>
 
 
 #### Henry:
-Created nearest neighbor features for rat observations<br>
-create hotspot analysis variables for rat observations using a fishnet<br>
-plotted correlation at city block level for rat-related spatial variables<br>
+<br>
+<br>
+<br>
 
 #### Kate: 
-Imported, joined, cleaned zoning and residential unit data <br>
-Created features for population density and zoning classes <br>
-Created correlation plots for numeric variables and zoning<br>
+<br>
+<br>
+<br>
 
 
 ### Weekly Tasks (Updated after class meeting)
