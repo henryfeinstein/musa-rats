@@ -157,6 +157,21 @@ blocks <- blocks %>%
 save(blocks, file = "./data/city_blocks_dist_vars.Rdata")
 
 # ------------------------------------------------------------------------------
+# load my variables
+load("data/city_blocks_dist_vars.Rdata")
+# load Kate's variables
+load("data/block2.Rdata")
+
+kate_vars <- block_dat.sf %>% 
+  st_drop_geometry() %>% 
+  select(-ward_name.x, -ward_name.y, -ward_pop_15.x, -ward_pop_15.y, -inspection_count,
+         -rats_found_yn, -rats_found_count, -area_acres) %>% 
+  distinct()
+
+# join
+blocks <- inner_join(blocks, kate_vars)
+
+# ------------------------------------------------------------------------------
 # correlation plots for spatial variables
 
 # join rat obs to blocks
@@ -172,19 +187,20 @@ blocks <- left_join(blocks, rats_block_join %>%
   mutate(inspection_count = replace_na(inspection_count, 0),
          rats_found_yn = replace_na(rats_found_yn, 0),
          rats_found_count = replace_na(rats_found_count, 0),
+         rats_found_count_pop_normalized = rats_found_count / pop_dens,
          area_acres = as.numeric(st_area(.)) / 43560)
 
 correlation.long <-
   st_drop_geometry(blocks) %>%
-  dplyr::select(-block_id) %>%
-  gather(Variable, Value, -rats_found_count)
+  dplyr::select(-block_id, -rats_found_count) %>%
+  gather(Variable, Value, -rats_found_count_pop_normalized)
 
 correlation.cor <-
   correlation.long %>%
   group_by(Variable) %>%
-  summarize(correlation = cor(Value, rats_found_count, use = "complete.obs"))
+  summarize(correlation = cor(Value, rats_found_count_pop_normalized, use = "complete.obs"))
 
-ggplot(correlation.long, aes(Value, rats_found_count)) +
+ggplot(correlation.long, aes(Value, rats_found_count_pop_normalized)) +
   geom_point(size = 0.1) +
   geom_text(data = correlation.cor, aes(label = paste("r =", round(correlation, 2))),
             x=-Inf, y=Inf, vjust = 1.5, hjust = -.1) +
