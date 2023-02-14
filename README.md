@@ -12,9 +12,8 @@
 
 
 #### Henry:
-<br>
-<br>
-<br>
+feature engineering: created additional variables related to previous rat observations, including logged variables and controlling for population density<br>
+correlation matrix of new variables<br>
 
 #### Kate: 
 feature engineering: created a variety of variables based on population density, zoning, built environment factors, and previous rat presence <br>

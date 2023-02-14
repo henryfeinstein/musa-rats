@@ -1,6 +1,7 @@
 # this script calculates spatial variables related to rat observation and treatment data points
 
 library(tidyverse)
+library(tidycensus)
 library(sf)
 library(lubridate)
 library(spdep)
@@ -8,6 +9,8 @@ library(gridExtra)
 library(FNN)
 
 source("https://raw.githubusercontent.com/urbanSpatial/Public-Policy-Analytics-Landing/master/functions.r")
+
+census_api_key("4bbe4bead4e5817f6a6b79e62c5bea69e77f1887", overwrite = TRUE)
 
 # ------------------------------------------------------------------------------
 # setup
@@ -100,15 +103,55 @@ blocks <- blocks %>%
            nn_function(st_coordinates(st_centroid(blocks)),
                        st_coordinates(st_centroid(filter(rat_net, 
                                                          rat_obs.isSig == 1))), 
-                       k = 1))
+                       k = 1),
+         hotspot_dist_log = log(hotspot_dist))
 
 # generating knn features at block level for nearest rat observations
 blocks <-
   blocks %>% 
   mutate(
+    area_acres_log = log(area_acres),
+    rat_nn1 = nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 1),
     rat_nn3 = nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 3), 
     rat_nn4 = nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 4), 
-    rat_nn5 = nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 5)) 
+    rat_nn5 = nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 5),
+    rat_nn1_log = log(nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 1)),
+    rat_nn3_log = log(nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 3)), 
+    rat_nn4_log = log(nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 4)), 
+    rat_nn5_log = log(nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 5)),
+    rat_nn10_log = log(nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 10)),
+    rat_nn15_log = log(nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 15)),
+    rat_nn20_log = log(nn_function(st_coordinates(st_centroid(blocks)), st_coordinates(filter(rats, activity == 1)), k = 20))) 
+
+# ------------------------------------------------------------------------------
+# incorporating population density
+pop_bg_17 <- get_acs(geography = "block group",
+                     year = 2017,
+                     state = "DC",
+                     survey = "acs5",
+                     variables = "B01001_001",
+                     geometry = TRUE) %>% 
+  st_transform("ESRI:102685")
+
+# pop density variable
+pop_bg_17 <- pop_bg_17 %>% 
+  mutate(pop_dens = estimate / st_area(.))
+
+# join to blocks by taking average pop density per block
+block_bg_join <- st_join(select(blocks, block_id), select(pop_bg_17, GEOID, pop_dens)) %>% 
+  st_drop_geometry() %>% 
+  group_by(block_id) %>% 
+  summarize(pop_dens = mean(as.numeric(pop_dens)))
+
+# join to block dataset
+blocks <- left_join(blocks, block_bg_join)
+
+# create some pop density-sensitive variables
+blocks <- blocks %>% 
+  mutate(rat_nn10_log_pop_dens = rat_nn10_log / pop_dens,
+         rat_nn5_pop_dens = rat_nn5 / pop_dens,
+         hotspot_dist_pop_dens = hotspot_dist / pop_dens,
+         hotspot_dist_log_pop_dens = hotspot_dist_log / pop_dens)
 
 # save out for later use
 save(blocks, file = "./data/city_blocks_dist_vars.Rdata")
@@ -195,6 +238,21 @@ ggplot() +
   geom_sf(data = blocks, aes(fill = rat_nn5), color = NA) +
   viridis::scale_fill_viridis() +
   labs(title = "KNN (K = 5) to Rat Observation by City Block") +
+  mapTheme()
+ggplot() +
+  geom_sf(data = blocks, aes(fill = pop_dens), color = NA) +
+  viridis::scale_fill_viridis() +
+  labs(title = "Population Density by City Block") +
+  mapTheme()
+ggplot() +
+  geom_sf(data = blocks, aes(fill = hotspot_dist_log), color = NA) +
+  viridis::scale_fill_viridis() +
+  labs(title = "Log of Distance to Nearest Hotspot by City Block") +
+  mapTheme()
+ggplot() +
+  geom_sf(data = blocks, aes(fill = hotspot_dist_log_pop_dens), color = NA) +
+  viridis::scale_fill_viridis() +
+  labs(title = "Log of Distance to Nearest Hotspot Divided by Pop Density by City Block") +
   mapTheme()
 
 # plotting moran's i
