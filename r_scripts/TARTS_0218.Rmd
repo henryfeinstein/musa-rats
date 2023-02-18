@@ -1,0 +1,1620 @@
+---
+title: "TARATS"
+author: "Shengao Yi"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+    theme: cerulean
+    highlight: monochrome
+    css: custom.css
+---
+
+<style>
+div.blue pre.r { background-color:#eff3ff; }
+</style>
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+
+#setup
+
+
+# Rmarkdown global setting
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(cache = TRUE)
+knitr::opts_chunk$set(fig.align = 'center')
+
+#----------------------------------------------------------------------------------------------------------  
+
+# Import libraries
+library(tidyverse)
+library(tidycensus)
+library(sf)
+library(spdep)
+library(caret)
+library(ckanr)
+library(FNN)
+library(grid)
+library(gridExtra)
+library(ggcorrplot)# plot correlation plot
+library(corrplot)
+library(corrr)      # another way to plot correlation plot
+library(kableExtra)
+library(jtools)     # for regression model plots
+library(ggstance) # to support jtools plots
+library(ggpubr)    # plotting R^2 value on ggplot point scatter
+library(broom.mixed) # needed for effects plots
+library(knitr)
+library(rmarkdown)
+library(RSocrata)
+library(viridis)
+library(ggplot2)
+library(stargazer)
+library(XML)
+library(data.table)
+library(ggpmisc)
+library(patchwork)
+library(spatstat)
+library(raster)
+library(classInt)   # for KDE and ML risk class intervals
+library(tableHTML)
+library(exactextractr)
+library(sp)
+library(units)
+library(lubridate)
+library(pscl)
+library(cvms)
+library(yardstick)
+library(plotROC)
+library(gganimate)
+library(gifski)
+library(randomForest)
+library(riem)
+
+#----------------------------------------------------------------------------------------------------------  
+
+# Temp
+source("https://raw.githubusercontent.com/urbanSpatial/Public-Policy-Analytics-Landing/master/functions.r")
+root.dir = "https://github.com/henryfeinstein/musa-rats/blob/main/data/"
+
+# Etc
+options(scipen=999)
+options(tigris_class = "sf")
+
+#----------------------------------------------------------------------------------------------------------  
+
+# functions
+
+st_c    <- st_coordinates
+st_coid <- st_centroid
+
+plotTheme <- theme(
+  plot.title =element_text(size=12),
+  plot.subtitle = element_text(size=8),
+  plot.caption = element_text(size = 6),
+  axis.text.x = element_text(size = 10, angle = 45, hjust = 1),
+  axis.text.y = element_text(size = 10),
+  axis.title.y = element_text(size = 10),
+  # Set the entire chart region to blank
+  panel.background=element_blank(),
+  plot.background=element_blank(),
+  #panel.border=element_rect(colour="#F0F0F0"),
+  # Format the grid
+  panel.grid.major=element_line(colour="#D0D0D0",size=.2),
+  axis.ticks=element_blank())
+
+mapThememin <- function(base_size = 10, title_size = 12, small_size = 8) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = title_size, colour = "black", hjust = 0.5),
+    plot.subtitle=element_text(size = base_size, colour = "black", hjust = 0.5, face="italic"),
+    plot.caption=element_text(size = small_size, colour = "black", hjust = 0.5),
+    axis.ticks = element_blank(),
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    strip.text.x = element_text(size = small_size, face="italic"),
+    strip.text.y = element_text(size = small_size, face="italic"),
+    strip.background = element_rect(colour="transparent", fill="transparent"),
+    legend.title = element_text(size = small_size),
+    legend.text = element_text(size = small_size),
+    legend.key.size = unit(0.4, "cm"))
+}
+
+mapThememin2 <- function(base_size = 8, title_size = 10, small_size = 6) {
+  theme(
+    text = element_text( color = "black"),
+    plot.title = element_text(size = title_size, colour = "black", hjust = 0.5),
+    plot.subtitle=element_text(size = base_size, colour = "black", hjust = 0.5, face="italic"),
+    plot.caption=element_text(size = small_size, colour = "black", hjust = 0.5),
+    axis.ticks = element_blank(),
+    axis.title = element_blank(),
+    axis.text = element_blank(),
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.background = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    strip.text.x = element_text(size = base_size),
+    strip.text.y = element_text(size = base_size),
+    strip.background = element_rect(colour="transparent", fill="transparent"),
+    legend.title = element_text(size = small_size),
+    legend.text = element_text(size = small_size),
+    legend.key.size = unit(0.25, "cm"))
+}
+
+
+corTheme <- function(base_size = 10, title_size = 12, small_size = 8){
+  theme(axis.text =  element_blank(), 
+        axis.ticks = element_blank(), 
+        text = element_text(size = 10),
+        panel.background = element_rect(fill = greyPalette5[1]),
+        axis.title.x = element_text(size = small_size),
+        axis.title.y = element_text(size = small_size),
+        plot.subtitle = element_text(hjust = 0.5, size = base_size),
+        plot.title = element_text(hjust = 0.5, size = title_size),
+        plot.caption=element_text(size = small_size, colour = "black", hjust = 0.5),
+        strip.background = element_rect(colour="transparent", fill="transparent"))
+}
+
+
+corTheme2 <- function(base_size = 10, title_size = 12, small_size = 8){
+  theme(axis.text =  element_text(size = small_size),
+        text = element_text(size = 10),
+        panel.background = element_rect(fill = greyPalette5[1]),
+        axis.title.x = element_text(size = small_size),
+        axis.title.y = element_text(size = small_size),
+        plot.subtitle = element_text(hjust = 0.5, size = base_size,  face="italic"),
+        plot.title = element_text(hjust = 0.5, size = title_size),
+        plot.caption=element_text(size = small_size, colour = "black", hjust = 0.5),
+        strip.background = element_rect(colour="transparent", fill="transparent"),
+        strip.text.x = element_text(size = small_size, face="italic"),
+        strip.text.y = element_text(size = small_size, face="italic"))
+}
+
+corTheme3 <- function(base_size = 9, title_size = 11, small_size = 7){
+  theme(axis.text =  element_text(size = small_size),
+        text = element_text(size = 10),
+        panel.background = element_rect(fill = greyPalette5[1]),
+        axis.title.x = element_text(size = small_size),
+        axis.title.y = element_text(size = small_size),
+        plot.subtitle = element_text(hjust = 0.5, size = base_size,  face="italic"),
+        plot.title = element_text(hjust = 0.5, size = title_size),
+        plot.caption=element_text(size = small_size, colour = "black", hjust = 0.5))
+}
+
+corTheme4 <- function(base_size = 9, title_size = 11, small_size = 7){
+  theme(axis.text =  element_text(size = small_size),
+        text = element_text(size = 10),
+        panel.background = element_rect(fill = greyPalette5[1]),
+        axis.title.x = element_text(size = small_size),
+        axis.title.y.right = element_text(size = small_size),
+        plot.subtitle = element_text(hjust = 0.5, size = base_size,  face="italic"),
+        plot.title = element_text(hjust = 0.5, size = title_size),
+        plot.caption=element_text(size = small_size, colour = "black", hjust = 0.5))
+}
+
+
+q5 <- function(variable) {as.factor(ntile(variable, 5))}
+
+q <- function(variable) {as.factor(ntile(variable, 5))}
+
+qBr <- function(df, variable, rnd) {
+  if (missing(rnd)) {
+    as.character(quantile(round(df[[variable]],0),
+                          c(.01,.2,.4,.6,.8), na.rm=T))
+  } else if (rnd == FALSE | rnd == F) {
+    as.character(formatC(quantile(df[[variable]],
+                                  c(.01,.2,.4,.6,.8), na.rm=T),
+                         digits = 3))
+  }
+}
+
+qBr2 <- function(df, variable, rnd) {
+  if (missing(rnd)) {
+    as.character(quantile(round(df[[variable]]*100,0)/100,
+                          c(.01,.2,.4,.6,.8), na.rm=T))
+  } else if (rnd == FALSE | rnd == F) {
+    as.character(formatC(quantile(df[[variable]],
+                                  c(.01,.2,.4,.6,.8), na.rm=T),
+                         digits = 3))
+  }
+}
+
+qBr3 <- function(df, variable, rnd) {
+  if (missing(rnd)) {
+    as.character(round(quantile(round(df[[variable]]*1000000,0),
+                          c(.01,.2,.4,.6,.8), na.rm=T)),0)
+  } else if (rnd == FALSE | rnd == F) {
+    as.character(formatC(quantile(df[[variable]],
+                                  c(.01,.2,.4,.6,.8), na.rm=T),
+                         digits = 3))
+  }
+}
+
+substrRight <- function(x, n){
+  substr(x, nchar(x)-n+1, nchar(x))
+}
+
+
+nn_function <- function(measureFrom,measureTo,k) {
+  measureFrom_Matrix <- as.matrix(measureFrom)
+  measureTo_Matrix <- as.matrix(measureTo)
+  nn <- get.knnx(measureTo, measureFrom, k)$nn.dist
+  output <- as.data.frame(nn) %>%
+    rownames_to_column(var = "thisPoint") %>%
+    gather(points, point_distance, V1:ncol(.)) %>%
+    arrange(as.numeric(thisPoint)) %>%
+    group_by(thisPoint) %>%
+    summarize(pointDistance = mean(point_distance)) %>%
+    arrange(as.numeric(thisPoint)) %>% 
+    dplyr::select(-thisPoint) %>%
+    pull()
+  return(output)  
+}
+
+
+myCrossValidate <- function(dataset, id, dependentVariable, indVariables) {
+  
+  allPredictions <- data.frame()
+  cvID_list <- unique(dataset[[id]])
+  
+  for (i in cvID_list) {
+    
+    thisFold <- i
+    cat("This hold out fold is", thisFold, "\n")
+    
+    fold.train <- filter(dataset, dataset[[id]] != thisFold) %>% as.data.frame() %>% 
+      dplyr::select(id, geometry, indVariables, dependentVariable)
+    fold.test  <- filter(dataset, dataset[[id]] == thisFold) %>% as.data.frame() %>% 
+      dplyr::select(id, geometry, indVariables, dependentVariable)
+    
+    regression <-
+      glm(countMVTheft ~ ., family = "poisson", 
+          data = fold.train %>% 
+            dplyr::select(-geometry, -id))
+    
+    thisPrediction <- 
+      mutate(fold.test, Prediction = predict(regression, fold.test, type = "response"))
+    
+    allPredictions <-
+      rbind(allPredictions, thisPrediction)
+    
+  }
+  return(st_sf(allPredictions))
+}
+
+#----------------------------------------------------------------------------------------------------------  
+
+# Colors ("https://coolors.co/gradient-palette/a8f368-f9035e?number=7")
+bluePalette5 <- c("#eff3ff","#bdd7e7","#6baed6","#3182bd","#08519c")
+blue2Palette5 <- c("#08519c","#3182bd","#6baed6","#bdd7e7","#eff3ff")
+H_bluePalette5 <- c("#eff3ff","#bdd7e7","#6baed6","#3182bd","#252525")
+orangePalette5 <- c("#FFF2E8","#FFD6B6","#FEB984","#FE9D51","#FD801F")
+orange2Palette5 <- c("#FFDFD0","#FFB89F","#FF926E","#FF6B3D","#FF440C")
+greyPalette5 <- c("#f7f7f7","#cccccc","#969696","#636363","#252525")
+greenPalette5 <- c("#edf8e9","#bae4b3","#74c476","#31a354","#006d2c")
+purplePalette5 <- c("#f2f0f7","#cbc9e2","#9e9ac8","#756bb1","#54278f")
+
+#----------------------------------------------------------------------------------------------------------  
+
+# LoadAPI(Min's key)
+census_api_key("4bbe4bead4e5817f6a6b79e62c5bea69e77f1887", overwrite = TRUE)
+
+
+```
+
+## Ⅰ. Introduction
+
+Rats carry a wide range of diseases that are harmful to humans.
+
+## Ⅱ. Data
+
+### 2.1 Data Wrangling
+
+#### 2.1.1 Initial Data
+
+Through text mining, based on the field "SERVICENOTES", when we detected words "baited", "treatment" and "treated", this indicated that there are rats activities, set value to one, and when encountered with other words like "no evidence", "no rat burrows" or "no rat activity", we set value to zero.
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+## Address to blocks
+
+a2b <- read.csv("./data/address_units_to_blocks.csv.gz", header = TRUE)
+
+## BBLS to blocks
+
+Bbls <- read.csv("./data/bbls_to_blocks.csv.gz", header = TRUE)
+
+## Cama to blocks
+Cama <- read.csv("./data/cama_to_blocks.csv.gz", header = TRUE)
+
+## Environment features
+Env_features <- read.csv("./data/env_features.csv.gz", header = TRUE)
+
+## Field validation outcomes
+Field_validation <- read.csv("./data/field_validation_outcomes.csv", header = TRUE)
+
+## Final address
+Final_address <- read.csv("./data/final_address_to_block_0.csv.gz", header = TRUE)
+
+## Impervious surfaces
+Impervious_surfaces <- read.csv("./data/impervious_surfaces.csv.gz", header = TRUE)
+
+## Permits to blocks
+Permits2blocks <- read.csv("./data/permits_to_blocks.csv.gz", header = TRUE)
+
+## Load rat infestation dataset and spatialize
+Rats <- read.csv("./data/rats_to_blocks.csv.gz", header = TRUE) %>%
+  na.omit() %>%
+  st_as_sf(.,coords=c("LONGITUDE","LATITUDE"),crs=4326) %>%
+  st_transform('ESRI:102685') %>%
+  mutate(month = month(ymd_hms(SERVICEORDERDATE)),
+         year = year(ymd_hms(SERVICEORDERDATE)),
+         serviceday = ymd(substr(SERVICEORDERDATE,1,10))) %>%
+  dplyr::select(P0010001, index_right, SERVICEORDERDATE, INSPECTIONDATE, serviceday, WARD, week, year, month, calls, activity, geometry)
+
+```
+
+#### 2.1.2 311 Data
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+Data311 <-
+  rbind(st_read("./data/311_City_Service_Requests_in_2015.geojson") %>%
+  st_transform('ESRI:102685') %>%
+  filter(SERVICECODEDESCRIPTION == "Alley Cleaning" | SERVICECODEDESCRIPTION == "Curb and Gutter Repair" | SERVICECODEDESCRIPTION == "DOEE - Nuisance Odor Complaints" | SERVICECODEDESCRIPTION == "DOEE - General Environmental Concerns" | SERVICECODEDESCRIPTION == "Dead Animal Collection" | SERVICECODEDESCRIPTION == "Illegal Dumping" | SERVICECODEDESCRIPTION == "Pothole" | SERVICECODEDESCRIPTION == "Sanitation Enforcement" | SERVICECODEDESCRIPTION == "Street Cleaning" | SERVICECODEDESCRIPTION == "Trash Collection - Missed" | SERVICECODEDESCRIPTION == "Yard Waste - Missed") %>%
+  dplyr::select(SERVICECODEDESCRIPTION, SERVICEORDERDATE, INSPECTIONDATE, LATITUDE, LONGITUDE, WARD) %>%
+  mutate(TYPE = case_when(SERVICECODEDESCRIPTION == "Alley Cleaning" ~ "Trash issues", 
+                          SERVICECODEDESCRIPTION == "DOEE - Nuisance Odor Complaints" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "DOEE - General Environmental Concerns" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Dead Animal Collection" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Illegal Dumping" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Sanitation Enforcement" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Street Cleaning" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Trash Collection - Missed" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Yard Waste - Missed" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Curb and Gutter Repair" ~ "Infrastructure issues",
+                          SERVICECODEDESCRIPTION == "Pothole" ~ "Infrastructure issues",
+                          ),
+         month = month(ymd_hms(SERVICEORDERDATE)),
+         serviceday = ymd(substr(SERVICEORDERDATE,1,10))
+         ) %>%
+  filter(month >= 8), 
+  st_read("./data/311_City_Service_Requests_in_2016.geojson") %>%
+  st_transform('ESRI:102685') %>%
+  filter(SERVICECODEDESCRIPTION == "Alley Cleaning" | SERVICECODEDESCRIPTION == "Curb and Gutter Repair" | SERVICECODEDESCRIPTION == "DOEE - Nuisance Odor Complaints" | SERVICECODEDESCRIPTION == "DOEE - General Environmental Concerns" | SERVICECODEDESCRIPTION == "Dead Animal Collection" | SERVICECODEDESCRIPTION == "Illegal Dumping" | SERVICECODEDESCRIPTION == "Pothole" | SERVICECODEDESCRIPTION == "Sanitation Enforcement" | SERVICECODEDESCRIPTION == "Street Cleaning" | SERVICECODEDESCRIPTION == "Trash Collection - Missed" | SERVICECODEDESCRIPTION == "Yard Waste - Missed") %>%
+  dplyr::select(SERVICECODEDESCRIPTION, SERVICEORDERDATE, INSPECTIONDATE, LATITUDE, LONGITUDE, WARD) %>%
+  mutate(TYPE = case_when(SERVICECODEDESCRIPTION == "Alley Cleaning" ~ "Trash issues", 
+                          SERVICECODEDESCRIPTION == "DOEE - Nuisance Odor Complaints" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "DOEE - General Environmental Concerns" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Dead Animal Collection" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Illegal Dumping" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Sanitation Enforcement" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Street Cleaning" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Trash Collection - Missed" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Yard Waste - Missed" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Curb and Gutter Repair" ~ "Infrastructure issues",
+                          SERVICECODEDESCRIPTION == "Pothole" ~ "Infrastructure issues",
+                          ),
+         month = month(ymd_hms(SERVICEORDERDATE)),
+         serviceday = ymd(substr(SERVICEORDERDATE,1,10))
+         ),
+  st_read("./data/311_City_Service_Requests_in_2017.geojson") %>%
+  st_transform('ESRI:102685') %>%
+  filter(SERVICECODEDESCRIPTION == "Alley Cleaning" | SERVICECODEDESCRIPTION == "Curb and Gutter Repair" | SERVICECODEDESCRIPTION == "DOEE - Nuisance Odor Complaints" | SERVICECODEDESCRIPTION == "DOEE - General Environmental Concerns" | SERVICECODEDESCRIPTION == "Dead Animal Collection" | SERVICECODEDESCRIPTION == "Illegal Dumping" | SERVICECODEDESCRIPTION == "Pothole" | SERVICECODEDESCRIPTION == "Sanitation Enforcement" | SERVICECODEDESCRIPTION == "Street Cleaning" | SERVICECODEDESCRIPTION == "Trash Collection - Missed" | SERVICECODEDESCRIPTION == "Yard Waste - Missed") %>%
+  dplyr::select(SERVICECODEDESCRIPTION, SERVICEORDERDATE, INSPECTIONDATE, LATITUDE, LONGITUDE, WARD) %>%
+  mutate(TYPE = case_when(SERVICECODEDESCRIPTION == "Alley Cleaning" ~ "Trash issues", 
+                          SERVICECODEDESCRIPTION == "DOEE - Nuisance Odor Complaints" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "DOEE - General Environmental Concerns" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Dead Animal Collection" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Illegal Dumping" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Sanitation Enforcement" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Street Cleaning" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Trash Collection - Missed" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Yard Waste - Missed" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Curb and Gutter Repair" ~ "Infrastructure issues",
+                          SERVICECODEDESCRIPTION == "Pothole" ~ "Infrastructure issues",
+                          ),
+         month = month(ymd_hms(SERVICEORDERDATE)),
+         serviceday = ymd(substr(SERVICEORDERDATE,1,10))
+         ),
+  st_read("./data/311_City_Service_Requests_in_2018.geojson") %>%
+  st_transform('ESRI:102685') %>%
+  filter(SERVICECODEDESCRIPTION == "Alley Cleaning" | SERVICECODEDESCRIPTION == "Curb and Gutter Repair" | SERVICECODEDESCRIPTION == "DOEE - Nuisance Odor Complaints" | SERVICECODEDESCRIPTION == "DOEE - General Environmental Concerns" | SERVICECODEDESCRIPTION == "Dead Animal Collection" | SERVICECODEDESCRIPTION == "Illegal Dumping" | SERVICECODEDESCRIPTION == "Pothole" | SERVICECODEDESCRIPTION == "Sanitation Enforcement" | SERVICECODEDESCRIPTION == "Street Cleaning" | SERVICECODEDESCRIPTION == "Trash Collection - Missed" | SERVICECODEDESCRIPTION == "Yard Waste - Missed") %>%
+  dplyr::select(SERVICECODEDESCRIPTION, SERVICEORDERDATE, INSPECTIONDATE, LATITUDE, LONGITUDE, WARD) %>%
+  mutate(TYPE = case_when(SERVICECODEDESCRIPTION == "Alley Cleaning" ~ "Trash issues", 
+                          SERVICECODEDESCRIPTION == "DOEE - Nuisance Odor Complaints" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "DOEE - General Environmental Concerns" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Dead Animal Collection" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Illegal Dumping" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Sanitation Enforcement" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Street Cleaning" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Trash Collection - Missed" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Yard Waste - Missed" ~ "Trash issues",
+                          SERVICECODEDESCRIPTION == "Curb and Gutter Repair" ~ "Infrastructure issues",
+                          SERVICECODEDESCRIPTION == "Pothole" ~ "Infrastructure issues",
+                          ),
+         month = month(ymd_hms(SERVICEORDERDATE)),
+         serviceday = ymd(substr(SERVICEORDERDATE,1,10))
+         ) %>%
+  filter(month < 8)
+  )
+
+```
+
+#### 2.1.3 Other Environmental Data
+
+describe them
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+## Ward
+Ward <- st_read("./data/Wards.geojson") %>%
+  st_transform('ESRI:102685') %>% 
+  dplyr::select(ward_name = NAME,
+         ward_pop_15 = POP_2011_2015)
+
+## Census blocks
+Census_blocks <- st_read("./data/Census_Blocks__2010.geojson") %>%
+  st_transform('ESRI:102685')
+
+# load street centerlines from DC open data
+centerlines <- st_read("./data/Street_Centerlines_2013/Street_Centerlines_2013.geojson") %>% 
+  st_transform("ESRI:102685") %>% 
+  filter(ROADTYPE == "Street")
+
+## Address Points
+addresses <- read.csv("./data/Address_Points.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("X", "Y"), crs = 4326, agr = "constant") %>%
+  st_transform('ESRI:102685')
+
+## Community Garden Polygons
+comm_gardens <- st_read("./data/Community_Garden_Areas.geojson") %>%
+  st_transform('ESRI:102685')
+
+## CAMA Commercial
+cama_comm <- read.csv("./data/Computer_Assisted_Mass_Appraisal_-_Commercial.csv", header = TRUE)
+
+## CAMA Condominium 
+cama_condo <- read.csv("./data/Computer_Assisted_Mass_Appraisal_-_Condominium.csv", header = TRUE)
+
+## CAMA Residential
+cama_res <- read.csv("./data/Computer_Assisted_Mass_Appraisal_-_Residential.csv", header = TRUE)
+
+## Construction Permits 2015
+const_permits15 <- read.csv("./data/Construction_Permits_in_2015.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant")
+
+## Construction Permits 2016
+const_permits16 <- read.csv("./data/Construction_Permits_in_2016.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant")
+
+## Joining construction permits 
+const_permits_all <- rbind(read.csv("./data/Construction_Permits_in_2015.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  mutate(month = month(APPLICATIONDATE)) %>%
+  filter(month >= 8) %>%
+  dplyr::select(-month), 
+  read.csv("./data/Construction_Permits_in_2016.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant"),
+  read.csv("./data/Construction_Permits_in_2017.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant"),
+  read.csv("./data/Construction_Permits_in_2018.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant")%>%
+  mutate(month = month(APPLICATIONDATE)) %>%
+  filter(month < 8) %>%
+  dplyr::select(-month)) %>%
+  st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform('ESRI:102685')
+
+## Public Trash Cans
+trash_cans <- read.csv("./data/Litter_Cans.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("X", "Y"), crs = 4326, agr = "constant") %>%
+  st_transform('ESRI:102685')
+
+## National Parks
+nat_parks <- st_read("./data/National_Parks.geojson") %>%
+  st_transform('ESRI:102685')
+
+## Parks and Rec Parks
+dc_parks <- st_read("./data/Parks_and_Recreation_Areas.geojson") %>%
+  st_transform('ESRI:102685')
+
+## Sidewalk Grates (Sewer)
+sewer_grates <- read.csv("./data/Sidewalk_Grates_2019.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("X", "Y"), crs = 4326, agr = "constant") %>%
+  st_transform('ESRI:102685')
+
+## Storm Drains (Markers)
+storm_drains <- read.csv("./data/Storm_Drain_Marker_Installations.csv", header = TRUE) %>%
+  st_as_sf(., coords = c("LONGITUDE", "LATITUDE"), crs = 4326, agr = "constant") %>%
+  st_transform('ESRI:102685')
+
+## Urban Ag Area
+urban_ag <- st_read("./data/Urban_Agriculture_Areas.geojson") %>%
+  st_transform('ESRI:102685')
+
+## Zoning Map
+zoning <- st_read("./data/Zoning_Regulations_of_2016.geojson") %>%
+  st_transform('ESRI:102685')
+
+
+```
+
+#### 2.1.4 Temperature Data
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+## Mean temperature per day
+
+weather.Panel <- 
+  riem_measures(station = "DCA", date_start = "2015-08-01", date_end = "2018-07-31") %>%
+  dplyr::select(valid, tmpf, p01i, sknt)%>%
+  replace(is.na(.), 0) %>%
+  mutate(serviceday = ymd(substr(valid,1,10))) %>%
+  mutate(week = week(serviceday),
+          dotw = wday(serviceday, label=TRUE)) %>%
+  group_by(serviceday) %>%
+  summarize(Temperature = max(tmpf),
+            Wind_Speed = max(sknt)) %>%
+  mutate(Temperature = ifelse(Temperature == 0, 42, Temperature))
+
+## temperature
+
+grid.arrange(
+  ggplot(weather.Panel, aes(serviceday, Wind_Speed)) + 
+    geom_line(color = '#FEB984') + 
+    labs(title="Wind Speed", x="Day", y="Wind Speed") + plotTheme,
+  ggplot(weather.Panel, aes(serviceday, Temperature)) + 
+    geom_line(color = '#9e9ac8') + 
+    labs(title="Temperature", x="Day", y="Temperature") + plotTheme,
+  top="Weather Data - Washington DCA - Aug, 2015 - July, 2018")
+
+
+```
+
+
+### 2.2 Feature Engineering
+
+#### 2.2.1 Create Block Polygons
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# convert street centerlines to block polygons
+blocks <- as.data.frame(st_collection_extract(st_polygonize(st_union(centerlines)))) %>% 
+  mutate(block_id = row_number()) %>% 
+  st_as_sf()
+
+boundary <- st_union(blocks)
+
+```
+
+#### 2.2.2 Join Data to Blocks
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# spatial join to assign each rat datapoint to a block polygon
+rats_block_join <- st_join(Rats, blocks)
+
+# count observations per block for mapping
+block_dat <- left_join(blocks, rats_block_join %>% 
+                                          st_drop_geometry() %>% 
+                                          group_by(block_id) %>% 
+                                          summarize(inspection_count = n(),
+                                                    rats_found_yn = ifelse(1 %in% activity, 1, 0),
+                                                    rats_found_count = sum(activity))) %>% 
+  mutate(inspection_count = replace_na(inspection_count, 0),
+         rats_found_yn = replace_na(rats_found_yn, 0),
+         rats_found_count = replace_na(rats_found_count, 0),
+         area_acres = as.numeric(st_area(.)) / 43560) %>%
+  mutate(found = case_when(rats_found_yn == "0" ~ "not_found",
+                            rats_found_yn == "1" ~ "found"))
+
+
+## Intersection of blocks and feature points
+storm_drains$block_id <- st_intersects(storm_drains, block_dat)
+sewer_grates$block_id <- st_intersects(sewer_grates, block_dat)
+trash_cans$block_id <- st_intersects(trash_cans, block_dat)
+const_permits_all$block_id <- st_intersects(const_permits_all, block_dat)
+
+storm_block <-
+  storm_drains %>%
+  group_by(block_id) %>%
+  summarize(count=n()) %>%
+  dplyr::filter(!grepl(':', block_id)) %>%
+  dplyr::filter(!grepl('integer', block_id)) %>%
+  st_drop_geometry() %>%
+  na.omit()
+
+block_dat$storm_drain <- storm_block$count[match(block_dat$block_id, storm_block$block_id)]
+block_dat[is.na(block_dat[, "storm_drain"]), "storm_drain"] <- 0
+
+sewer_block <-
+  sewer_grates %>%
+  group_by(block_id) %>%
+  summarize(count=n()) %>%
+  dplyr::filter(!grepl(':', block_id)) %>%
+ dplyr::filter(!grepl('integer', block_id)) %>%
+  st_drop_geometry() %>%
+  na.omit()
+
+block_dat$sewer_grate <- sewer_block$count[match(block_dat$block_id, sewer_block$block_id)]
+
+block_dat[is.na(block_dat[, "sewer_grate"]), "sewer_grate"] <- 0
+
+trashcan_block <-
+  trash_cans %>%
+  group_by(block_id) %>%
+  summarize(count=n()) %>%
+  dplyr::filter(!grepl(':', block_id)) %>%
+ dplyr::filter(!grepl('integer', block_id)) %>%
+  st_drop_geometry() %>%
+  na.omit()
+
+block_dat$trash_can <- trashcan_block$count[match(block_dat$block_id, trashcan_block$block_id)]
+
+block_dat[is.na(block_dat[, "trash_can"]), "trash_can"] <- 0
+
+const_block <-
+  const_permits_all %>%
+  group_by(block_id) %>%
+  summarize(count=n()) %>%
+  dplyr::filter(!grepl(':', block_id)) %>%
+ dplyr::filter(!grepl('integer', block_id)) %>%
+  st_drop_geometry() %>%
+  na.omit()
+
+block_dat$const_permit <- const_block$count[match(block_dat$block_id, const_block$block_id)]
+
+block_dat[is.na(block_dat[, "const_permit"]), "const_permit"] <- 0
+
+# storm drains by block 
+ggplot() + geom_sf(data = block_dat, aes(fill = storm_drain), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Count of Storm Drains by Block",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+# sewer grates by block 
+ggplot() + geom_sf(data = block_dat, aes(fill = sewer_grate), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Count of Sewer Grates by Block",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+
+# trash cans by block 
+ggplot() + geom_sf(data = block_dat, aes(fill = trash_can), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Count of Public Trash Cans by Block",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+# construction permits (2015-2018) by block 
+ggplot() + geom_sf(data = block_dat, aes(fill = const_permit), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Construction Permits by Block, 2015-2018",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+#finding density (aka units) by block
+addresses <- st_join(addresses, block_dat)
+
+block_units <- addresses %>%
+  dplyr::select(geometry, ACTIVE_RES_UNIT_COUNT, block_id)
+
+block_units <- block_units %>%
+  st_drop_geometry()%>%
+  group_by(block_id) %>%
+  summarize(unit_count = sum(ACTIVE_RES_UNIT_COUNT))
+
+block_dat$res_unit_count <- block_units$unit_count[match(block_dat$block_id, block_units$block_id)]
+block_dat[is.na(block_dat[, "res_unit_count"]), "res_unit_count"] <- 0
+
+# residential units by block 
+ggplot() + 
+  geom_sf(data = block_dat, aes(fill = res_unit_count), color = "transparent") +
+  scale_fill_gradient(low = bluePalette5[1], high = bluePalette5[5]) +
+  labs(title = "Count of Residential Units by Block") +
+  mapThememin2()
+
+```
+
+
+#### 2.2.3 Join Zoning Data to Blocks
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+#finding zoning for each block 
+
+block_zone <- st_join(st_centroid(block_dat), zoning)
+zoning_by_block <- block_zone %>%
+  dplyr::select(block_id,ZONE_DISTRICT)
+
+zoning_by_block$Residential_Zone <- ifelse(zoning_by_block$ZONE_DISTRICT == "Residential Zone", 1, 0)
+zoning_by_block$Residential_Flat_Zone <- ifelse(zoning_by_block$ZONE_DISTRICT == "Residential Flat Zone", 1, 0)
+zoning_by_block$Unzoned <- ifelse(zoning_by_block$ZONE_DISTRICT == "Unzoned", 1, 0)
+zoning_by_block$Residential_Apt_Zone <- ifelse(zoning_by_block$ZONE_DISTRICT == "Residential Apartment Zone", 1, 0)
+zoning_by_block$Mixed_Use <- ifelse(zoning_by_block$ZONE_DISTRICT== "Mixed-Use Zone", 1, 0)
+zoning_by_block$Downtown_Zone <- ifelse(zoning_by_block$ZONE_DISTRICT== "Downtown Zone", 1, 0)
+zoning_by_block$Prod_Dist_Repair <- ifelse(zoning_by_block$ZONE_DISTRICT== "Production, Distribution, and Repair Zone", 1, 0)
+zoning_by_block$Special_Purpose <- ifelse(zoning_by_block$ZONE_DISTRICT== "Special Purpose Zone", 1, 0)
+zoning_by_block$Neighborhood_Mixed_Use <- ifelse(zoning_by_block$ZONE_DISTRICT == "Neighborhood Mixed-Use Zone", 1, 0)
+
+zoning_by_block <- zoning_by_block %>%
+  group_by(block_id) %>%
+  dplyr::select(-ZONE_DISTRICT)
+
+zoning_by_block %>%
+  dplyr::select(-block_id, geometry) %>%
+  mutate(Zone= names(.)[which.max(c(Residential_Zone, Residential_Flat_Zone, Unzoned, Residential_Apt_Zone, Mixed_Use, Downtown_Zone, Prod_Dist_Repair, Special_Purpose, Neighborhood_Mixed_Use))])
+
+zoning_by_block <- zoning_by_block %>%
+  group_by(block_id) %>%
+  st_drop_geometry() %>% 
+  rowwise() %>%
+  mutate(max = names(cur_data())[which.max(c_across(everything()))])
+
+block_dat$zoning <- zoning_by_block$max[match(block_dat$block_id, zoning_by_block$block_id)]
+
+# These variables can't be used in logit model, very strong influence on the results
+
+# # zones that had rats most often (residential zone, residential flat zone, residential apt zone, and mixed use)
+# block_dat <- 
+#   block_dat %>% 
+#   mutate(res_mixed_zone = ifelse(str_detect(block_dat$zoning, "Residential_Zone|Residential_Flat_Zone|Residential_Apt_Zone|Mixed_Use"), 1, 0))
+# 
+# # zoned for res/mixed use and had rats previously
+# block_dat$zone_rats <- ifelse(block_dat$res_mixed_zone == 1 & block_dat$rats_found_yn == 1, 1, 0)
+# 
+# # zoned for res/mixed use and did not have rats previously 
+# block_dat$zone_no_rats <- ifelse(block_dat$res_mixed_zone == 1 & block_dat$rats_found_yn == 0, 1, 0)
+# 
+# # less common rat zones and had rats previously 
+# block_dat$no_zone_rats <- ifelse(block_dat$res_mixed_zone == 0 & block_dat$rats_found_yn == 1, 1, 0)
+# 
+# # less common rat zones and did not have rats previously 
+# block_dat$no_zone_no_rats <- ifelse(block_dat$res_mixed_zone == 0 & block_dat$rats_found_yn == 0, 1, 0)
+
+#most common zoning code by block 
+ggplot() + geom_sf(data = block_dat, aes(fill = zoning), color = "transparent") +
+  labs(title = "Count of Residential Units by Block") +
+  mapThememin2()
+
+ggplot(data=block_dat, aes(x = zoning, y = rats_found_count)) +
+  geom_bar(stat="identity", width=0.5) +
+  coord_flip() +
+  plotTheme
+
+```
+
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# number of inspections
+ggplot() + geom_sf(data = block_dat, aes(fill = inspection_count), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Count of Inspection by Block",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+# rats found y/n
+ggplot() +
+  geom_sf(data = block_dat, aes(fill = found), color = "transparent") +
+  scale_fill_manual(values = c("not_found" = bluePalette5[1], "found" = bluePalette5[4])) +
+  labs(title = "",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+# count of rats found
+ggplot() + geom_sf(data = block_dat, aes(fill = rats_found_count), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Number of Rats Found by Block",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+
+# rat id rate (count of rats found / number of inspections)
+ggplot() + geom_sf(data = block_dat, aes(fill = rats_found_count / inspection_count), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Rat ID Rate (Count of Rats Found / Number of Inspections) \nby Block",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+# block size
+ggplot() + geom_sf(data = block_dat, aes(fill = area_acres), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Block Size (Acres)",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+# # distribution of block size
+# ggplot() + 
+#   geom_density(data = block_dat %>% filter(area_acres < 100), aes(area_acres))
+
+
+# # inspections by ward mapped
+# ggplot() + 
+#   geom_sf(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
+#                    aes(fill = inspections), color = "transparent") +
+#            geom_sf_text(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
+#                      aes(label = ward_name)) +
+#   labs(title = "Inspections by Ward")
+# 
+# # inspections by ward bar chart
+# ggplot() + geom_bar(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
+#                    aes(y = inspections, x = ward_name), stat = "identity")
+# 
+# # rat id rate by ward mapped
+# ggplot() + geom_sf(data = block_dat %>% 
+#                      group_by(ward_name) %>% 
+#                      summarize(inspections = sum(inspection_count),
+#                                rats_found_count = sum(rats_found_count)) %>% 
+#                      mutate(rats_found_rate = rats_found_count / inspections),
+#                    aes(fill = rats_found_rate), color = "transparent") +
+#   geom_sf_text(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
+#                aes(label = ward_name)) +
+#   labs(title = "Rat ID Rate by Ward")
+# 
+# # inspections per person by ward
+# ggplot() + geom_sf(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count),
+#                                                                           pop15 = first(ward_pop_15)),
+#                    aes(fill = inspections / pop15), color = "transparent") +
+#   geom_sf_text(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
+#                aes(label = ward_name)) +
+#   labs(title = "Inspections/Person by Ward")
+
+# rats found per person by ward
+# ggplot() + geom_sf(data = block_dat %>% 
+#                      group_by(ward_name) %>% 
+#                      summarize(inspections = sum(inspection_count),
+#                                rats_found_count = sum(rats_found_count),
+#                                pop15 = first(ward_pop_15)) %>% 
+#                      mutate(rats_found_rate = rats_found_count / inspections),
+#                    aes(fill = rats_found_count / pop15), color = "transparent") +
+#   geom_sf_text(data = block_dat %>% group_by(ward_name) %>% summarize(inspections = sum(inspection_count)),
+#                aes(label = ward_name)) +
+#   labs(title = "Rats Found/Person by Ward")
+
+```
+
+
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# These variables can't be used in logit model, very strong influence on the results
+
+# # pop density above average 
+# block_dat$high_pop <- ifelse(block_dat$res_unit_count >= 172.48, 1, 0)
+# 
+# # pop density above average and rats
+# block_dat$high_pop_rats <- ifelse(block_dat$res_unit_count >= 172.48 & block_dat$rats_found_yn == 1, 1, 0)
+# 
+# # pop density above average and no rats
+# block_dat$high_pop_no_rats <- ifelse(block_dat$res_unit_count >= 172.48 & block_dat$rats_found_yn == 0, 1, 0)
+# 
+# # pop density below average and rats
+# block_dat$low_pop_rats <- ifelse(block_dat$res_unit_count <= 172.48 & block_dat$rats_found_yn == 1, 1, 0)
+# 
+# # pop density below average and no rats
+# block_dat$low_pop_no_rats <- ifelse(block_dat$res_unit_count <= 172.48 & block_dat$rats_found_yn == 0, 1, 0)
+# 
+# # const permits above average and rats
+# block_dat$high_const_rats <- ifelse(block_dat$const_permit >= 11 & block_dat$rats_found_yn == 1, 1, 0)
+# 
+# # const permits above average and no rats 
+# block_dat$high_const_no_rats <- ifelse(block_dat$const_permit >= 11 & block_dat$rats_found_yn == 0, 1, 0)
+# 
+# # const permits below average and rats
+# block_dat$low_const_rats <- ifelse(block_dat$const_permit <= 11 & block_dat$rats_found_yn == 1, 1, 0)
+# 
+# # const permits below average and no rats 
+# block_dat$low_const_no_rats <- ifelse(block_dat$const_permit <= 11 & block_dat$rats_found_yn == 0, 1, 0)
+# 
+# # above average sewer grates
+# block_dat$high_sewer <- ifelse(block_dat$sewer_grate >= 8.29, 1, 0)
+# 
+# # above average storm drains
+# block_dat$high_storm <- ifelse(block_dat$storm_drain >= 1.98, 1, 0)
+# 
+# # above average sewer grates
+# block_dat$high_trash <- ifelse(block_dat$trash_can >= 2.74, 1, 0)
+# 
+# ## above average sewer grates, storm drains, and const permits 
+# block_dat$high_sewer_storm_const <- ifelse(block_dat$high_sewer == 1 & block_dat$high_storm == 1 & block_dat$high_trash == 1, 1, 0)
+
+# average residential unit count per block = 172.48 (median = 3)
+# average const permits count per block = 11.00 (median = 7)
+# average sewer grates count per block = 8.29 (median = 4) 
+# average storm drains count per block = 1.98 (median = 2)
+# average trash cans count per block = 2.74 (median = 2)
+
+
+```
+
+
+#### 2.2.4 Create Nearest Neighbor Features
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# generating knn features at block level for nearest rat observations
+
+block_dat <-
+  block_dat %>%
+  mutate(Transh_cans_nn3 = round(nn_function(st_c(st_coid(block_dat)), st_c(trash_cans), k = 3)),
+         Storm_drains_nn3 = round(nn_function(st_c(st_coid(block_dat)), st_c(storm_drains), k = 3)),
+         Sewer_grates_nn3 = round(nn_function(st_c(st_coid(block_dat)), st_c(sewer_grates), k = 3)),
+         area_acres_log = log(area_acres),
+         rats_nn3 = nn_function(st_coordinates(st_centroid(block_dat)), st_coordinates(filter(Rats, activity == 1)), k = 3),
+         rat_nn4 = nn_function(st_coordinates(st_centroid(block_dat)), st_coordinates(filter(Rats, activity == 1)), k = 4), 
+         rat_nn5 = nn_function(st_coordinates(st_centroid(block_dat)), st_coordinates(filter(Rats, activity == 1)), k = 5),
+         rat_nn3_log = log(nn_function(st_coordinates(st_centroid(block_dat)), st_coordinates(filter(Rats, activity == 1)), k = 3)), 
+         rat_nn4_log = log(nn_function(st_coordinates(st_centroid(block_dat)), st_coordinates(filter(Rats, activity == 1)), k = 4)), 
+         rat_nn5_log = log(nn_function(st_coordinates(st_centroid(block_dat)), st_coordinates(filter(Rats, activity == 1)), k = 5)))
+
+# incorporating population density
+pop_bg_17 <- get_acs(geography = "block group",
+                     year = 2017,
+                     state = "DC",
+                     survey = "acs5",
+                     variables = "B01001_001",
+                     geometry = TRUE) %>% 
+  st_transform("ESRI:102685") %>%
+  mutate(pop_dens = estimate / st_area(.))
+
+# join to blocks by taking average pop density per block
+block_bg_join <- 
+  st_join(dplyr::select(blocks, block_id), dplyr::select(pop_bg_17, GEOID, pop_dens)) %>% 
+  st_drop_geometry() %>% 
+  group_by(block_id) %>% 
+  summarize(pop_dens = mean(as.numeric(pop_dens)))
+
+# join to block dataset
+block_dat <- left_join(block_dat, block_bg_join)
+
+# create some pop density-sensitive variables
+block_dat <- 
+  block_dat %>% 
+  mutate(rat_nn5_pop_dens = rat_nn5 / pop_dens)
+
+
+block_dat.nn <- 
+  dplyr::select(block_dat, ends_with("nn3")) %>%
+    gather(Variable, value, -geometry)
+
+block_dat.nns <- unique(block_dat.nn$Variable)
+mapList <- list()
+
+
+# for(i in block_dat.nns){
+#   mapList[[i]] <-
+#     ggplot() +
+#     geom_sf(data = filter(block_dat.nn, Variable == i), aes(fill=q5(value)), color = "transparent") +
+#     scale_fill_manual(values = bluePalette5,
+#                       labels = qBr(block_dat.nn, "value"),
+#                       name = "Quantiles",
+#                       na.translate=FALSE) +
+#     labs(title = i) +
+#   mapThememin()
+# }
+# 
+# do.call(grid.arrange,c(mapList, ncol=3, top="Nearest neighbor potential factors by Blocks"))
+
+
+for(i in block_dat.nns){
+  mapList[[i]] <-
+    ggplot() +
+    geom_sf(data = filter(block_dat.nn, Variable == i), aes(fill=value), color = "transparent") +
+    scale_fill_gradient(low = bluePalette5[1], high = bluePalette5[5]) +
+    labs(title = i) +
+  mapThememin()
+}
+
+do.call(grid.arrange,c(mapList, ncol=3, top="Nearest Neighbor potential factors by Blocks"))
+```
+#### 2.2.5 Create the Fishnet
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# create fishnet
+fishnet <- 
+  st_make_grid(boundary,
+               cellsize = 500, 
+               square = TRUE) %>%
+  .[boundary] %>%          
+  st_sf() %>%
+  mutate(uniqueID = 1:n())
+
+# assign each inspection a value of 1 and aggregate
+inspection_net <- 
+  dplyr::select(Rats) %>% 
+  mutate(count_inspection = 1) %>% 
+  aggregate(., fishnet, sum) %>%
+  mutate(count_inspection = replace_na(count_inspection, 0),
+         uniqueID = 1:n(),
+         cvID = sample(round(nrow(fishnet) / 24), 
+                       size=nrow(fishnet), replace = TRUE))
+
+# join in rat observed variable
+rat_net <- 
+  Rats %>%
+  filter(activity == 1) %>%
+  st_join(fishnet, join=st_within) %>%
+  st_drop_geometry() %>%
+  group_by(uniqueID) %>%
+  summarize(rat_obs_count = n()) %>%
+  left_join(inspection_net, ., by = "uniqueID") %>%
+  ungroup() %>% 
+  mutate(rat_obs_count = replace_na(rat_obs_count, 0))
+
+ggplot() +
+  geom_sf(data = rat_net, aes(fill = rat_obs_count), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Count of Rats Found by Fishnet",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+  
+
+```
+
+
+## Ⅲ. Exploratory Analysis
+
+Trash issues: Alley Cleaning, Nuisance Odor Complaints, General Environmental Concerns, Dead Animal Collection, Illegal Dumping, Sanitation Enforcement, Street Cleaning, Trash Collection, Yard Waste 9
+
+Infrastructure issues: Curb and Gutter Repair, Pothole 2
+
+From the bar charts, we can know that the infrastructure issue has the highest reports in Feb, nearly 3000 cases, then continue to decrease. For trash issues, the peak values concentrat from June to September, which may be related to the high temperature, so we should take temperature into consideration. From the point of overview, trash issues are much more than infrastructure issues. From the map, infrastructure issues are mainly located in the west and centeral area, trash issues are more evenly and widely distributed.
+
+### 3.1  Time Analysis
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# Error: cannot allocate vector of size 3.4 Gb
+
+# rats_JAN <- rats_block_join %>% dplyr::filter(month == 1)
+# rats_FEB <- rats_block_join %>% dplyr::filter(month == 2)
+# rats_MAR <- rats_block_join %>% dplyr::filter(month == 3)
+# rats_APR <- rats_block_join %>% dplyr::filter(month == 4)
+# rats_MAY <- rats_block_join %>% dplyr::filter(month == 5)
+# rats_JUN <- rats_block_join %>% dplyr::filter(month == 6)
+# rats_JUL <- rats_block_join %>% dplyr::filter(month == 7)
+# rats_AUG <- rats_block_join %>% dplyr::filter(month == 8)
+# rats_SEP <- rats_block_join %>% dplyr::filter(month == 9)
+# rats_OCT <- rats_block_join %>% dplyr::filter(month == 10)
+# rats_NOV <- rats_block_join %>% dplyr::filter(month == 11)
+# rats_DEC <- rats_block_join %>% dplyr::filter(month == 12)
+# 
+# rats_ALL <- 
+#   rats_block_join %>% 
+#   group_by(block_id) %>%
+#   mutate(found_str = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_str) %>% st_drop_geometry()
+# 
+# rats_JAN <- 
+#   rats_JAN %>% 
+#   group_by(block_id) %>%
+#   mutate(found_JAN = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_JAN) %>% st_drop_geometry()
+# 
+# rats_FEB <- 
+#   rats_FEB %>% 
+#   group_by(block_id) %>%
+#   mutate(found_FEB = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_FEB) %>% st_drop_geometry()
+# 
+# rats_MAR <- 
+#   rats_MAR %>% 
+#   group_by(block_id) %>%
+#   mutate(found_MAR = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_MAR) %>% st_drop_geometry()
+# 
+# rats_APR <- 
+#   rats_APR %>% 
+#   group_by(block_id) %>%
+#   mutate(found_APR = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_APR) %>% st_drop_geometry()
+# 
+# rats_MAY <- 
+#   rats_MAY %>% 
+#   group_by(block_id) %>%
+#   mutate(found_MAY = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_MAY) %>% st_drop_geometry()
+# 
+# rats_JUN <- 
+#   rats_JUN %>% 
+#   group_by(block_id) %>%
+#   mutate(found_JUN = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_JUN) %>% st_drop_geometry()
+# 
+# rats_JUL <- 
+#   rats_JUL %>% 
+#   group_by(block_id) %>%
+#   mutate(found_JUL = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_JUL) %>% st_drop_geometry()
+# 
+# rats_AUG <- 
+#   rats_AUG %>% 
+#   group_by(block_id) %>%
+#   mutate(found_AUG = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_AUG) %>% st_drop_geometry()
+# 
+# rats_SEP <- 
+#   rats_SEP %>% 
+#   group_by(block_id) %>%
+#   mutate(found_SEP = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_SEP) %>% st_drop_geometry()
+# 
+# rats_OCT <- 
+#   rats_OCT %>% 
+#   group_by(block_id) %>%
+#   mutate(found_OCT = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_OCT) %>% st_drop_geometry()
+# 
+# rats_NOV <- 
+#   rats_NOV %>% 
+#   group_by(block_id) %>%
+#   mutate(found_NOV = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_NOV) %>% st_drop_geometry()
+# 
+# rats_DEC <- 
+#   rats_DEC %>% 
+#   group_by(block_id) %>%
+#   mutate(found_DEC = case_when(activity == 0 ~ "not-found",
+#                                activity == 1 ~ "found")) %>%
+#   dplyr::select(block_id, found_DEC) %>% st_drop_geometry()
+# 
+# rats_monthly <- purrr::reduce(list(rats_ALL, rats_JAN, rats_FEB, rats_MAR, rats_APR, rats_MAY, rats_JUN, rats_JUL, rats_AUG, rats_SEP, rats_OCT, rats_NOV, rats_DEC), dplyr::left_join, by='block_id')
+# 
+# rats_block_monthly <- left_join(blocks, rats_monthly, by='block_id')
+# 
+# rats_block_monthly <- as.data.frame(lapply(rats_block_monthly %>%st_drop_geometry(), function(x) ifelse(is.na(x), "not-found", x)))
+# 
+# block_monthly_grid <- 
+#   rats_block_monthly %>% 
+#   gather(Variable, Value, -block_id)
+# 
+# block_monthly_grid <- left_join(blocks %>% dplyr::select(block_id), block_monthly_grid, by = "block_id")
+# 
+# ggplot() +
+#   geom_sf(data = boundary, fill = greyPalette5[1], color = "transparent", alpha = 0.5) +
+#   geom_sf(data = block_monthly_grid %>%
+#             mutate(across(Variable, factor, levels=c("found_JAN", "found_FEB"))), aes(fill = Value), color = "transparent") +
+#   facet_wrap(~Variable) +
+#   scale_fill_manual(values = c("not-found" = bluePalette5[1], "found" = bluePalette5[4])) +
+#   labs(title = "California Burned Area by month",
+#        subtitle = "Burned Area \n where sum of wildfire area since 1910 is over 25% of each grid",
+#        caption = "") +
+#   mapThememin2()
+
+
+
+```
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# spatial join to assign each 311 datapoint to a block polygon
+block_311_join <- st_join(blocks, Data311) %>%
+  filter(year(SERVICEORDERDATE) == 2016)
+
+
+block_311_total <-
+  block_311_join %>%
+  group_by(block_id, TYPE) %>% 
+  summarize(count = n()) %>%
+  na.omit()
+
+# plot 311 data based on blocks and types: Trash and Infrastructure issues
+ggplot() +
+  geom_sf(data = block_311_total, aes(fill = count), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  facet_wrap(~TYPE) +
+  labs(title = "",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+block_311_monthly <-
+  block_311_join %>%
+  filter(year(SERVICEORDERDATE) == 2016) %>%
+  group_by(block_id, TYPE, month)%>% 
+  summarize(count = n()) %>%
+  na.omit()
+
+ggplot() +
+  geom_sf(data = block_311_monthly %>%
+            filter(TYPE == "Trash issues"), aes(fill = count), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  facet_wrap(~month) +
+  labs(title = "Trash issues by month",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+ggplot() +
+  geom_sf(data = block_311_monthly %>%
+            filter(TYPE == "Infrastructure issues"), aes(fill = count), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  facet_wrap(~month) +
+  labs(title = "Infrastructure issues by month",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+
+# bar plot: number of 311 data according to month
+
+ggplot(data = Data311 %>%
+  filter(year(SERVICEORDERDATE) == 2016)%>%
+  group_by(month, TYPE) %>% 
+  summarize(month_count = n()), aes(x = month, y = month_count))+
+  geom_bar(fill=bluePalette5[3], color = "white", size = 0.5, stat = "identity")+
+  scale_x_continuous(limits = c(0, 13), breaks = 1:12) +
+  facet_wrap(~TYPE) +
+  labs(title = "Issues counts by month",
+       subtitle = "",
+       x = "month",
+       y = "counts",
+       caption = "")+
+  geom_hline(yintercept = 0, size = 0.25, color = greyPalette5[3]) +
+  corTheme2()+
+  theme(panel.background = element_blank(),
+        panel.grid.major.y = element_line(linetype = "longdash", size = 0.25, color = greyPalette5[2]))
+
+
+
+
+```
+
+### 3.2  Spatial Analysis
+
+#### 3.2.1 Local Moran's I Analysis of Rat Observations
+
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+## make polygon to neighborhoods... 
+rat_net.nb <- poly2nb(as_Spatial(rat_net), queen=TRUE)
+## ... and neighborhoods to list of weights
+rat_net.weights <- nb2listw(rat_net.nb, style="W", zero.policy=TRUE)
+
+local_morans <- localmoran(rat_net$rat_obs_count, rat_net.weights, zero.policy=TRUE) %>% 
+  as.data.frame()
+
+# join local Moran's I results to fishnet
+rat_net.localMorans <- 
+  cbind(local_morans, as.data.frame(rat_net)) %>% 
+  st_sf() %>%
+  dplyr::select(Rat_Observation_Count = rat_obs_count, 
+                Local_Morans_I = Ii, 
+                P_Value = `Pr(z != E(Ii))`) %>%
+  mutate(Significant_Hotspots = ifelse(P_Value <= 0.001, 1, 0)) %>%
+  gather(Variable, Value, -geometry)
+
+vars <- unique(rat_net.localMorans$Variable)
+varList <- list()
+
+for(i in vars){
+  varList[[i]] <- 
+    ggplot() +
+      geom_sf(data = filter(rat_net.localMorans, Variable == i), 
+              aes(fill = Value), colour=NA) +
+      scale_fill_viridis(name="") +
+      labs(title=i) +
+      mapThememin() + theme(legend.position="bottom")}
+
+do.call(grid.arrange,c(varList, ncol = 4, top = "Local Morans I statistics, Rats"))
+
+```
+
+#### 3.2.2 Distance from Hotspot
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# add distance to hot spot var to final fishnet
+rat_net <- rat_net %>% 
+  mutate(rat_obs.isSig = 
+           ifelse(local_morans[,5] <= 0.001, 1, 0)) %>%
+  mutate(rat_obs.isSig.dist = 
+           nn_function(st_coordinates(st_centroid(rat_net)),
+                       st_coordinates(st_centroid(filter(rat_net, 
+                                                     rat_obs.isSig == 1))), 
+                       k = 1))
+ggplot() +
+  geom_sf(data = rat_net, aes(fill=rat_obs.isSig.dist), color = "transparent") +
+  scale_fill_viridis() +
+  labs(title = "Distance from Rats Hotspot",
+       subtitle = "Hotspot : p-value ≤ 0.001",
+       caption = "") +
+  mapThememin()
+
+# add distance to hot spot var to block dataset
+block_dat <- 
+  block_dat %>% 
+  mutate(hotspot_dist =
+           nn_function(st_coordinates(st_centroid(block_dat)),
+                       st_coordinates(st_centroid(filter(rat_net, 
+                                                         rat_obs.isSig == 1))), 
+                       k = 1),
+         hotspot_dist_log = log(hotspot_dist))
+
+block_dat <-
+  block_dat %>%
+  mutate(hotspot_dist_pop_dens = hotspot_dist / pop_dens,
+         hotspot_dist_log_pop_dens = hotspot_dist_log / pop_dens)
+
+```
+
+
+### 3.3 Correaltion Analysis
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+#correlation matrix
+newVars <-
+  select_if(st_drop_geometry(block_dat), is.numeric) %>% 
+  dplyr::select(-block_id, -rats_found_yn) %>%
+  na.omit()
+
+ggcorrplot(
+  round(cor(newVars), 1),
+  p.mat = cor_pmat(newVars),
+  colors = c("#7fcdbb", "white", "#2c7fb8"),
+  type="lower",
+  insig = "blank") +  
+    labs(title = "Correlation across numeric variables") +
+  theme(axis.text.x=element_text(size=rel(0.75), angle=45)) + 
+  theme(axis.text.y=element_text(size=rel(0.75)))
+
+
+# Need to adjust
+
+correlation.long <-
+  st_drop_geometry(block_dat) %>%
+    dplyr::select(-block_id, -rats_found_yn, -inspection_count) %>%
+    gather(Variable, Value, -rats_found_count)
+
+correlation.cor <-
+  correlation.long %>%
+    group_by(Variable) %>%
+    summarize(correlation = cor(Value, rats_found_count, use = "complete.obs"))
+    
+ggplot(correlation.long, aes(Value, rats_found_count)) +
+  geom_point(size = 0.1, color = bluePalette5[3])  +
+  geom_text(data = correlation.cor, aes(label = paste("r =", round(correlation, 2))),
+            x=-Inf, y=Inf, vjust = 1.5, hjust = -.2, size = 2, color = bluePalette5[5]) +
+  geom_smooth(method = "lm", se = FALSE, colour = bluePalette5[5]) +
+  facet_wrap(~Variable, ncol = 3, scales = "free") +
+  labs(title = "Scatterplots of potential factors with correlations",
+       subtitle = "Rats counts as a function of potential factors",
+       x = "potential factor value",
+       y = "Rats counts") +
+  corTheme()
+
+```
+
+## Ⅳ. Risks Estimation Model
+
+### 4.1 Build Fire Risk Prediction Model
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+# join rats with temperature
+rats_block_join <- 
+  left_join(rats_block_join %>% st_drop_geometry(), weather.Panel, by = "serviceday") 
+  
+rats_block_final <-
+  left_join(rats_block_join %>% st_drop_geometry(), block_dat %>% st_drop_geometry(), by = "block_id") %>%
+  na.omit()
+
+# create training and testing data by year
+
+training_data <- subset(rats_block_final, year >= 2015 & year <= 2017 )
+testing_data <- subset(rats_block_final, year == 2018)
+
+# logit model
+reg_ALL <- glm(activity ~ .,
+            data = as.data.frame(training_data) %>% 
+            dplyr::select(-SERVICEORDERDATE, -INSPECTIONDATE, -serviceday, -year, -week, -calls, -rats_found_yn, -rats_found_count, -inspection_count, -found),
+            family="binomial"(link="logit"))
+
+reg_ALL
+pR2(reg_ALL)
+
+
+```
+### 4.2 Model Prediction
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+testProbs = data.frame(Outcome = as.factor(testing_data$activity),
+                       Probs = predict(reg_ALL, testing_data, type= "response"))
+
+ggplot(testProbs, aes(x = Probs, fill = as.factor(Outcome))) + 
+  geom_density() +
+  facet_grid(Outcome ~ .) +
+  scale_fill_manual(values = c(bluePalette5[2], bluePalette5[4])) + xlim(0, 1) +
+  geom_hline(yintercept = 0, size = 0.25, color = greyPalette5[3]) +
+  geom_vline(xintercept = 0.5, size = 0.4, color = bluePalette5[3], linetype = "longdash") +
+  labs(x = "Found", y = "Density",
+       title = "Regression Model",
+       subtitle = "",
+       caption = "")  +
+  corTheme2()+
+  theme(panel.background = element_blank(),
+        panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
+        legend.position = "none")
+
+# random forest
+
+# test_x <- testing_data %>%
+#   dplyr::select(-SERVICEORDERDATE, -INSPECTIONDATE, -serviceday, -year, -week, -calls, -rats_found_yn, -rats_found_count, -inspection_count, -found, -activity)
+# 
+# # 对测试数据进行预测
+# # complete_test_x <- test_x[complete.cases(test_x), ]
+# RF_prediction <- predict(RF_model, newdata = test_x)
+# 
+# RF_testProbs = data.frame(Outcome = as.factor(testing_data$activity),
+#                        Probs = predict(RF_model, newdata = test_x))
+# ggplot(RF_testProbs, aes(x = Probs, fill = as.factor(Outcome))) +
+#   geom_density() +
+#   facet_grid(Outcome ~ .) +
+#   scale_fill_manual(values = c(bluePalette5[2], bluePalette5[4])) + xlim(0, 1) +
+#   geom_hline(yintercept = 0, size = 0.25, color = greyPalette5[3]) +
+#   geom_vline(xintercept = 0.5, size = 0.4, color = bluePalette5[3], linetype = "longdash") +
+#   labs(x = "Found", y = "Density",
+#        title = "Regression Model",
+#        subtitle = "",
+#        caption = "")  +
+#   corTheme2()+
+#   theme(panel.background = element_blank(),
+#         panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
+#         legend.position = "none")
+```
+
+## Ⅴ. Model validation
+
+### 5.1 Goodnees of fit
+
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+testProbs <- testProbs %>%
+  mutate(predOutcome  = as.character(ifelse(testProbs$Probs > 0.6 , 1, 0)),
+         predOutcome_ft  = as.factor(ifelse(testProbs$Probs > 0.6 , 1, 0)))
+
+# RF_testProbs <- RF_testProbs %>%
+#   mutate(predOutcome  = as.character(ifelse(RF_testProbs$Probs > 0.6 , 1, 0)),
+#          predOutcome_ft  = as.factor(ifelse(RF_testProbs$Probs > 0.6 , 1, 0)))
+
+cf_mtrix <- caret::confusionMatrix(testProbs$predOutcome_ft, testProbs$Outcome, positive = "1")
+
+cf_mtrix
+
+cf_mtrix_table <- tidy(cf_mtrix$table)
+
+eval <- evaluate(
+  data = testProbs,
+  target_col = "Outcome",
+  prediction_cols = "predOutcome",
+  type = "binomial"
+)
+
+plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
+
+
+```
+
+### 5.2 ROC(AUC)
+  
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+auc <- round(pROC::auc(testProbs$Outcome, testProbs$Probs),3)
+
+ggplot(testProbs, aes(d = as.numeric(testProbs$Outcome), m = Probs)) +
+  geom_roc(n.cuts = 100, labels = FALSE, colour = bluePalette5[3], pointsize = 0.4, size = 0.6) +
+  style_roc(theme = theme_grey) +
+  geom_abline(slope = 1, intercept = 0, size = 0.4, color = greyPalette5[3]) +
+  labs(title = "ROC curve",
+       subtitle = auc,
+       caption = "",
+       y = "True Positive Fraction") +
+  corTheme2()+
+  theme(panel.background = element_blank(),
+        panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
+        panel.grid.major.x = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
+        legend.position = "none")
+
+# RF_auc <- round(pROC::auc(RF_testProbs$Outcome, RF_testProbs$Probs),3)
+# 
+# ggplot(RF_testProbs, aes(d = as.numeric(RF_testProbs$Outcome), m = Probs)) +
+#   geom_roc(n.cuts = 100, labels = FALSE, colour = bluePalette5[3], pointsize = 0.4, size = 0.6) +
+#   style_roc(theme = theme_grey) +
+#   geom_abline(slope = 1, intercept = 0, size = 0.4, color = greyPalette5[3]) +
+#   labs(title = "ROC curve",
+#        subtitle = auc,
+#        caption = "",
+#        y = "True Positive Fraction") +
+#   corTheme2()+
+#   theme(panel.background = element_blank(),
+#         panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
+#         panel.grid.major.x = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
+#         legend.position = "none")
+
+
+```
+
+### 5.3 Cross Validation
+
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# need to complete
+
+ctrl <- trainControl(method = "cv", number = 100, classProbs=TRUE, summaryFunction=twoClassSummary)
+
+cv <- train(activity ~ .,
+              data = rats_block_final %>% na.omit() %>%
+                dplyr::select(-SERVICEORDERDATE, -INSPECTIONDATE, -serviceday.-year, -week, -calls, -rats_found_yn, -rats_found_count, -inspection_count, -found), 
+                method="glm", family="binomial", metric="ROC", trControl = ctrl)
+
+cv_gfm <- round(cv$results[2:4],4)
+cv
+cv_resample <- cv$resample %>%
+  dplyr::select(-Resample) %>%
+  gather(metric, value) %>% # column to row with value (100obj > 300obj)
+  left_join(gather(cv$results[2:4], metric, mean))#metric is key to left join
+
+
+dplyr::select(cv$resample, -Resample) %>%
+  gather(metric, value) %>%
+  left_join(gather(cv$results[2:4], metric, mean)) %>%
+  ggplot(aes(value)) + 
+    geom_histogram(bins=35, fill = bluePalette5[3]) +
+    facet_wrap(~metric) +
+    geom_hline(yintercept = 0, size = 0.25, color = greyPalette5[3]) +
+    geom_vline(aes(xintercept = mean), colour = bluePalette5[4], linetype = 4, size = 0.7) +
+    scale_x_continuous(limits = c(0, 1)) +
+    labs(x="Goodness of Fit", y="Count", title="CV Goodness of Fit Metrics",
+         subtitle = "Across-fold mean reprented as dotted lines",
+         caption = "Figure 4-4-2")+
+  corTheme2()+
+  theme(panel.background = element_blank(),
+        panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
+        panel.grid.major.x = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
+        legend.position = "none")
+
+
+```
+
+
+
