@@ -7,8 +7,7 @@
 ### Weekly Updates 
 ### Week 2 (2/6-2/13)
 #### Eric: 
-<br>
-<br>
+Model building and validation<br>
 
 
 #### Henry:
