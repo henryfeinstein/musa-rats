@@ -11,8 +11,7 @@
 
 
 #### Henry:
-<br>
-<br>
+Begin setting up structure for web application<br>
 
 #### Kate: 
 <br>
