@@ -1,5 +1,5 @@
 function initializeMap() {
-    let map = L.map('map').setView([38.9092301970931, -77.03380390100355], 8);
+    let map = L.map('map').setView([38.9092301970931, -77.03380390100355], 13);
 
     const mapboxAccount = 'mapbox';
     const mapboxStyle = 'light-v10';
@@ -10,4 +10,8 @@ function initializeMap() {
     }).addTo(map);
 
     return map;
+}
+
+export {
+    initializeMap,
 }
