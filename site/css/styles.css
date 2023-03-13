@@ -1,0 +1,22 @@
+html {
+    margin: 0;
+    height: 100vh;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    box-sizing: border-box;
+}
+
+.map-container {
+    height: 100%;
+    box-sizing: border-box;
+  }
+  
+  #map {
+    height: 100%;
+  }
