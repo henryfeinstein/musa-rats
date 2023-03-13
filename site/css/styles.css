@@ -38,7 +38,7 @@ h1 {
 }
 
 .list-up {
-  height: 80%;
+  height: 20rem;
 }
 
 .list-down {
@@ -54,11 +54,11 @@ h1 {
 .tab-container {
   display: flex;
   flex-direction: row;
-  height: 10%;
 }
 
 .tab-button {
   width: 100%;
+  height: 5rem;
   font-family: 'Reem Kufi', sans-serif;
   font-weight: 600;
   font-size: larger;
