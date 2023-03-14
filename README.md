@@ -7,17 +7,11 @@
 ### Weekly Updates 
 ### 3/13
 #### Eric: 
-<br>
-
-
+Working on model <br>
 #### Henry:
 Begin setting up structure for web application<br>
-
 #### Kate: 
-<br>
-<br>
-<br>
-
+Working on writing/annotations for markdown and prepping next presentation<br>
 
 ### Weekly Tasks (Updated after class meeting)
 ### 3/13  
