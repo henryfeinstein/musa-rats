@@ -38,7 +38,7 @@ h1 {
 }
 
 .list-up {
-  height: 20rem;
+  height: 150%;
 }
 
 .list-down {
@@ -72,6 +72,32 @@ h1 {
 .unpressed {
   background-color: white;
   color: black;
+}
+
+.listed-request {
+  display: flex;
+  flex-direction: row;
+  border-bottom-color: black;
+  border-bottom: 1px;
+  padding: 5px;
+  border-bottom-style: solid;
+  justify-content: center;
+  align-items: space-between;
+}
+
+.list-priority {
+  padding: 0.5rem;
+  width: 30%;
+}
+
+.list-address {
+  padding: 0.5rem;
+  width: 40%;
+}
+
+.list-date {
+  padding: 0.5rem;
+  width: 30%;
 }
 
 #map {

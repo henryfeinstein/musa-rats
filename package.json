@@ -1,0 +1,22 @@
+{
+  "name": "musa-rats",
+  "version": "1.0.0",
+  "description": "[Update Slides](https://docs.google.com/presentation/d/1LAYOw6l2nIqjGVE_cFZAxXhMhPaKCRQdTpatDFhXqk8/edit#slide=id.g2066689e90f_0_5)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/henryfeinstein/musa-rats.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/henryfeinstein/musa-rats/issues"
+  },
+  "homepage": "https://github.com/henryfeinstein/musa-rats#readme",
+  "dependencies": {
+    "convert-csv-to-json": "^2.0.0"
+  }
+}

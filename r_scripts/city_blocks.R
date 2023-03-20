@@ -23,7 +23,7 @@ centerlines_pg <- as.data.frame(st_collection_extract(st_polygonize(st_union(cen
 # join wards to centerline polygons
 centerlines_pg <- st_join(centerlines_pg, wards)
 
-st_write(centerlines_pg, "data/city_blocks.geojson")
+st_write(st_transform(centerlines_pg, crs = 4326), "data/city_blocks.geojson")
 
 # load rat infestation dataset and spatialize
 rats <- read.csv("./data/rats_to_blocks.csv.gz") %>% 

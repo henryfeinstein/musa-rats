@@ -1,7 +1,15 @@
-import { initializeMap } from "./map.js";
+import { initializeBlocks, initializeMap } from "./map.js";
+import { parseRequestData, buildPredictionList } from "./dataProcessing.js";
 
-// initialize map
+// initialize site
 let map = initializeMap();
+let blocks = await initializeBlocks(map);
+let requests = await parseRequestData();
+buildPredictionList(requests);
+
+
+window.blocks = blocks;
+window.requests = requests;
 
 // get DOMs
 let listButton = document.querySelector("#list-button");
