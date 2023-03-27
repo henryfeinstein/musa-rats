@@ -2,3 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
+data/311_City_Service_Requests_in_2015.geojson
+data/311_City_Service_Requests_in_2016.geojson
+data/311_City_Service_Requests_in_2017.geojson
+data/311_City_Service_Requests_in_2018.geojson
