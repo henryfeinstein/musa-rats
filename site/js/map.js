@@ -1,15 +1,15 @@
 import { fetchJSON } from "./utils.js";
 
-function initializeMap() {
-    let map = L.map('map').setView([38.9092301970931, -77.03380390100355], 13);
+mapboxgl.accessToken = 'pk.eyJ1IjoieWVzZW5pYW8iLCJhIjoiY2tlZjAyM3p5MDNnMjJycW85bmpjenFkOCJ9.TDYe7XRNP8CnAto0kLA5zA';
 
-    const mapboxAccount = 'mapbox';
-    const mapboxStyle = 'light-v10';
-    const mapboxToken = 'pk.eyJ1IjoiaGVucnlmZWluc3RlaW4iLCJhIjoiY2w4dzIyYXc0MDN2dTNwcnE3ZnMzOXh5OCJ9.Xj0CS62yWWvKB-v_uYz9sQ';
-    L.tileLayer(`https://api.mapbox.com/styles/v1/${mapboxAccount}/${mapboxStyle}/tiles/256/{z}/{x}/{y}@2x?access_token=${mapboxToken}`, {
-    maxZoom: 19,
-    attribution: '© <a href="https://www.mapbox.com/about/maps/">Mapbox</a> © <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> <strong><a href="https://www.mapbox.com/map-feedback/" target="_blank">Improve this map</a></strong>',
-    }).addTo(map);
+function initializeMap() {
+    const map = new mapboxgl.Map({
+        container: 'map', // container ID
+        // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+        style: 'mapbox://styles/mapbox/light-v9', // style URL
+        center: [-77.03380390100355, 38.9092301970931], // starting position [lng, lat],
+        zoom: 9, // starting zoom
+    });
 
     return map;
 }
@@ -19,14 +19,47 @@ async function initializeBlocks(map) {
     let blocks = await fetchJSON('./data/city_blocks.geojson');
 
     // add to new map layer
-    map.blockLayer = L.geoJSON(blocks, {
-        style: {
-            opacity: 0.3,
-            fillOpacity: 0,
-            weight: 1,
-            color: "#000000",
-        },
-    }).addTo(map);
+    // map.blockLayer = L.geoJSON(blocks, {
+    //     style: {
+    //         opacity: 0.3,
+    //         fillOpacity: 0,
+    //         weight: 1,
+    //         color: "#000000",
+    //     },
+    // }).addTo(map);
+
+    map.on('load', () => {
+        // Add a data source containing GeoJSON data.
+        map.addSource('blocks-boundary', {
+            'type': 'geojson',
+            'data': blocks
+        });
+
+        map.addLayer({
+            'id': 'blocks',
+            'type': 'fill',
+            'source': 'blocks-boundary', // reference the data source
+            'layout': {},
+            'generateId': true,
+            'paint': {
+                // 'fill-color': '#0080ff', // blue color fill
+                // 'fill-opacity': 0,
+                'fill-outline-color': 'rgba(0,0,0,0.1)',
+                // 'fill-color': '#627BC1',
+                'fill-opacity': 0.1,
+            },
+        });
+        map.addLayer({
+            'id': 'outline',
+            'type': 'line',
+            'source': 'blocks-boundary',
+            'layout': {},
+            'paint': {
+                'line-color': '#ffffff',
+                'line-width': 1,
+            },
+        });
+    });
 
     return blocks;
 }
