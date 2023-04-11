@@ -15,9 +15,9 @@ hotspot analysis for 311 models<br>
 
 ### Weekly Tasks (Updated after class meeting)
 ### 4/11  
-Henry - <br>
-Eric - <br>
-Kate - <br>
+Henry - Updating app <br>
+Eric - Spatial cross validation and app <br>
+Kate - Generalizability writing, presentation prep <br>
 
 
 
