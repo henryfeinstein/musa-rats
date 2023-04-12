@@ -5,20 +5,19 @@
 [Update Slides](https://docs.google.com/presentation/d/1LAYOw6l2nIqjGVE_cFZAxXhMhPaKCRQdTpatDFhXqk8/edit#slide=id.g2066689e90f_0_5)
 
 ### Weekly Updates 
-### 3/21
+### 4/11
 #### Eric: 
-Working on model <br>
+Working on models and model selection<br>
 #### Henry:
-Begin setting up structure for web application<br>
+App development application<br>
 #### Kate: 
-Analyzed feature importance for categorical and continuous variables, made visuals for markdown <br>
-Worked on writing/annotations for markdown and prepping next presentationm
+hotspot analysis for 311 models<br>
 
 ### Weekly Tasks (Updated after class meeting)
-### 3/13  
-Henry - continue working on app, maybe some markdown writing<br>
-Eric - work on models and cost-benefit analysis<br>
-Kate - create feature importance analysis visuals, work on markdown writing <br>
+### 4/11  
+Henry - Updating app <br>
+Eric - Spatial cross validation and app <br>
+Kate - Generalizability writing, presentation prep <br>
 
 
 
