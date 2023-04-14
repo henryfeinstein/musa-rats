@@ -1,8 +1,8 @@
-import { initializeBlocks, initializeMap } from "./map.js";
+import { initializeBlocks, initializeMap, addHotspot } from "./map.js";
 import { parseRequestData, buildPredictionList } from "./dataProcessing.js";
 
 // initialize site
-let map = initializeMap();
+let map = await initializeMap();
 let blocks = await initializeBlocks(map);
 let requests = await parseRequestData();
 buildPredictionList(requests);
@@ -11,45 +11,34 @@ buildPredictionList(requests);
 window.blocks = blocks;
 window.requests = requests;
 
+// event handlers
+function onRatHotspotCheck() {
+    if (ratHotspotCheckbox.checked) {
+        callHotspotCheckbox.checked = false;
+        let path = 'rat-hotspot';
+        addHotspot(map, path);
+    }
+}
+
+function onCallHotspotCheck() {
+    if (callHotspotCheckbox.checked) {
+        ratHotspotCheckbox.checked = false;
+        let path = 'call-hotspot';
+        addHotspot(map, path);
+    }
+}
+
+function onWardMenuSelection() {
+    console.log(wardMenu.value);
+}
+
 // get DOMs
-let listButton = document.querySelector("#list-button");
-let mapButton = document.querySelector("#map-button");
-let analysisButton = document.querySelector("#analysis-button");
 let listContainer = document.querySelector("#list-container");
-
-// event listener functions
-function onListButtonClick() {
-    listButton.classList.remove("unpressed");
-    listButton.classList.add("pressed");
-    mapButton.classList.remove("pressed");
-    mapButton.classList.add("unpressed");
-    analysisButton.classList.remove("pressed");
-    analysisButton.classList.add("unpressed");
-    listContainer.classList.add("list-up");
-    listContainer.classList.remove("list-down");
-}
-
-function onMapButtonClick() {
-    listButton.classList.remove("pressed");
-    listButton.classList.add("unpressed");
-    mapButton.classList.remove("unpressed");
-    mapButton.classList.add("pressed");
-    analysisButton.classList.remove("pressed");
-    analysisButton.classList.add("unpressed");
-    listContainer.classList.remove("list-up");
-    listContainer.classList.add("list-down");
-}
-
-function onAnalysisButtonClick() {
-    listButton.classList.remove("pressed");
-    listButton.classList.add("uppressed");
-    mapButton.classList.remove("pressed");
-    mapButton.classList.add("unpressed");
-    analysisButton.classList.remove("unpressed");
-    analysisButton.classList.add("pressed");
-}
+let wardMenu = document.querySelector("#ward-menu");
+let ratHotspotCheckbox = document.querySelector("#rat-hotspot");
+let callHotspotCheckbox = document.querySelector("#call-hotspot");
 
 // event listeners
-listButton.addEventListener('click', onListButtonClick);
-mapButton.addEventListener('click', onMapButtonClick);
-analysisButton.addEventListener('click', onAnalysisButtonClick);
+ratHotspotCheckbox.addEventListener('change', onRatHotspotCheck);
+callHotspotCheckbox.addEventListener('change', onCallHotspotCheck);
+wardMenu.addEventListener('change', onWardMenuSelection);

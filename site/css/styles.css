@@ -33,6 +33,12 @@ h1 {
   box-sizing: border-box;
 }
 
+.controls-container {
+  display: flex;
+  flex-direction: column;
+  /* height: 200px; */
+}
+
 .title-container {
   background-color: red;
 }

@@ -2,7 +2,7 @@ import { fetchJSON } from "./utils.js";
 
 mapboxgl.accessToken = 'pk.eyJ1IjoieWVzZW5pYW8iLCJhIjoiY2tlZjAyM3p5MDNnMjJycW85bmpjenFkOCJ9.TDYe7XRNP8CnAto0kLA5zA';
 
-function initializeMap() {
+async function initializeMap() {
     const map = new mapboxgl.Map({
         container: 'map', // container ID
         // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
@@ -34,6 +34,20 @@ function initializeMap() {
     );
 
     map.addControl(new mapboxgl.NavigationControl());
+
+    // load data for hotspots
+    let ratHotspot = await fetchJSON('./data/rat_hotspot.geojson');
+    let callHotspot = await fetchJSON('./data/req_hotspot.geojson');
+
+    map.addSource('rat-hotspot', {
+        'type': 'geojson',
+        'data': ratHotspot
+    });
+
+    map.addSource('call-hotspot', {
+        'type': 'geojson',
+        'data': callHotspot
+    });
 
     return map;
 }
@@ -145,7 +159,31 @@ async function initializeBlocks(map) {
     return blocks;
 }
 
+function addHotspot(map, type) {
+    //if hotspot layer is already present, remove it
+    if (map.getLayer('hotspot')) {
+        map.removeLayer('hotspot');
+    }
+
+    map.addLayer({
+        'id': 'hotspot',
+        'type': 'fill',
+        'source': type, // reference the data source
+        'layout': {},
+        'generateId': true,
+        'paint': {
+            'fill-color': '#0080ff', // blue color fill
+            'fill-opacity': 0,
+            'fill-outline-color': 'rgba(0,0,0,0.1)',
+            'fill-color': '#627BC1',
+            'fill-opacity': 0.1,
+        },
+    });
+
+}
+
 export {
     initializeMap,
     initializeBlocks,
+    addHotspot,
 }

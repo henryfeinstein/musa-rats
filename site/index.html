@@ -31,18 +31,39 @@
                 <h1>RATScreener</h1>
             </div>
 
+            <div id="controls-container" class="controls-container">
+                <div class="control-container">
+                    <label for="ward-menu">Select Ward: </label>
+                    <select name="ward-menu" id="ward-menu">
+                        <option value="all-wards">All Wards</option>
+                        <option value="ward-1">Ward 1</option>
+                        <option value="ward-2">Ward 2</option>
+                        <option value="ward-3">Ward 3</option>
+                        <option value="ward-4">Ward 4</option>
+                        <option value="ward-5">Ward 5</option>
+                        <option value="ward-6">Ward 6</option>
+                        <option value="ward-7">Ward 7</option>
+                        <option value="ward-8">Ward 8</option>
+                    </select>
+                </div>
+                <div class="control-container">
+                    <label for="rat-hotspot">Show Rat Hotspots: </label>
+                    <input type="checkbox" id="rat-hotspot" name="rat-hotspot" value="Rat Hotspots">
+                </div>
+                <div class="control-container">
+                    <label for="call-hotspot">Show 311 Hotspots: </label>
+                    <input type="checkbox" id="call-hotspot" name="call-hotspot" value="311 Hotspots">
+                </div>
+            </div>
+
             <div class="map-container">
                 <div id="geocoder" class="geocoder"></div>
                 <div id="map"></div>
             </div>
 
-            <div id="list-container" class="list-container list-up"></div>
+            
 
-            <div class="tab-container">
-                <button id="list-button" class="tab-button pressed">List</button>
-                <button id="map-button" class="tab-button unpressed">Map</button>
-                <button id="analysis-button" class="tab-button unpressed">Analysis</button>
-            </div>
+            <div id="list-container" class="list-container list-down"></div>
 
         </div>
 
