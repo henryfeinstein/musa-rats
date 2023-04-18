@@ -1,0 +1,102 @@
+---
+title: "Untitled"
+author: "Kate Tanabe"
+date: "2023-04-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### 2.2.5 Create the Fishnet
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+# create fishnet
+fishnet2 <- 
+  st_make_grid(boundary,
+               cellsize = 500, 
+               square = TRUE) %>%
+  .[boundary] %>%          
+  st_sf() %>%
+  mutate(uniqueID = 1:n())
+
+#Data311 <- Data311 %>% mutate(id=row)
+
+# assign each inspection a value of 1 and aggregate
+request_net <- 
+  dplyr::select(Data311) %>% 
+  mutate(count_req = 1) %>% 
+  aggregate(., fishnet2, sum) %>%
+  mutate(count_req = replace_na(count_req, 0),
+         uniqueID = 1:n(),
+         cvID = sample(round(nrow(fishnet2) / 24), 
+                       size=nrow(fishnet2), replace = TRUE))
+
+# join in rat observed variable
+req_net <- 
+  Data311 %>%
+ # filter(activity == 1) %>%
+  st_join(fishnet2, join=st_within) %>%
+  st_drop_geometry() %>%
+  group_by(uniqueID) %>%
+  summarize(req_count = n()) %>%
+  left_join(request_net, ., by = "uniqueID") %>%
+  ungroup() %>% 
+  mutate(req_count = replace_na(req_count, 0))
+
+ggplot() +
+  geom_sf(data = req_net, aes(fill = req_count), color = "transparent") +
+  scale_fill_gradient(low = greyPalette5[1], high = bluePalette5[5]) +
+  labs(title = "Count of Inspections (Fishnet)",
+       subtitle = "",
+       caption = "") +
+  mapThememin2()
+  
+
+```
+
+### 3.2  Spatial Analysis
+
+#### 3.2.1 Local Moran's I Analysis of Rat Observations
+
+
+```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+
+## make polygon to neighborhoods... 
+req_net.nb <- poly2nb(as_Spatial(req_net), queen=TRUE)
+## ... and neighborhoods to list of weights
+req_net.weights <- nb2listw(req_net.nb, style="W", zero.policy=TRUE)
+
+local_morans_req <- localmoran(req_net$req_count, req_net.weights, zero.policy=TRUE) %>% 
+  as.data.frame()
+
+# join local Moran's I results to fishnet
+req_net.localMorans <- 
+  cbind(local_morans_req, as.data.frame(req_net)) %>% 
+  st_sf() %>%
+  dplyr::select(Req_Count = req_count, 
+                Local_Morans_I1 = Ii, 
+                P_Value1 = `Pr(z != E(Ii))`) %>%
+  mutate(request_hotspot = ifelse(P_Value1 <= 0.001, 1, 0)) %>%
+  gather(Variable, Value, -geometry)
+
+vars2 <- unique(req_net.localMorans$Variable)
+varList2 <- list()
+
+for(i in vars2){
+  varList2[[i]] <- 
+    ggplot() +
+      geom_sf(data = filter(req_net.localMorans, Variable == i), 
+              aes(fill = Value), colour=NA) +
+      scale_fill_gradient(low = "lightgray", high = "#E91C1C") +
+      labs(title=i, size = 5) +
+      mapThememin2() + theme(legend.position="bottom")}
+
+do.call(grid.arrange,c(varList2, ncol = 4, top = "Local Morans I statistics, Requests"))
+
+sf::st_write(req_net.localMorans, "C:/req_hotspot.geojson")
+
+```
+
