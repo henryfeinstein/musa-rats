@@ -96,7 +96,7 @@ for(i in vars2){
 
 do.call(grid.arrange,c(varList2, ncol = 4, top = "Local Morans I statistics, Requests"))
 
-sf::st_write(req_net.localMorans, "C:/req_hotspot.geojson")
+sf::st_write(st_transform(rat_net.localMorans, 4326), "./data/rat_hotspot.geojson", append = F)
 
 ```
 
