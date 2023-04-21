@@ -770,7 +770,7 @@ On the settlement pattern side, we collected data on population density, zoning,
 
 Each of these variables was spatially aggregated into the city block dataset described above. The variables demonstrated a range of different relationships to the history of rat infestation identification in the primary dataset. 
 
-```{r create fishnet and morans i, message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+```{r , message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
 block_dat_nogeom <- block_dat %>%
   st_drop_geometry() 
 block_dat_nogeom$pop_density <- ifelse(block_dat$pop_dens >= 0.0005250146, 'Above Avg', 'Below Avg')
@@ -1013,7 +1013,7 @@ Before reaching the modeling stage, it is important to understand the relationsh
 
 
 
-```{r misc ggplot message=FALSE, eval=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
+```{r misc ggplot, message=FALSE, eval=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
 
 
 # storm drains by block 
@@ -1088,7 +1088,13 @@ ggplot() +
 ```
 
 
-## 3. Modeling
+## 3. Risks Estimation Model
+
+### 3.1 Build Rats Prediction Model
+
+In this section, we aim to develop a machine learning model to predict the presence of rats in a given block. To accomplish this task, we have implemented five different models, namely logistic regression, random forest, SVM, Zero-inflated model, and Gradient Boosting.
+
+Firstly, We divided the dataset into training and testing sets, with the training set covering the period from 2015 to 2017 and the testing set covering the year 2018. This approach allows us to train our models on a subset of the data and then test their performance on a separate and previously unseen dataset. This helps us to evaluate how well the model can generalize to new data and avoid overfitting to the training set. The use of a testing set is a standard practice in machine learning and helps to ensure that the model performs well on new, unseen data.
 
 ```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
 # join rats with temperature
@@ -1167,21 +1173,25 @@ Gbm_model <- gbm(activity ~ ., data = as.data.frame(training_data) %>%
 ```
 
 
-### 4.2 Model Prediction
+### 3.2 Model Prediction
+
+As our prediction results are probabilities, we need to define a threshold to determine the boundary between the presence and absence of rats. In this regard, we plotted the probability distribution of each model and evaluated their performance. From the graphs, it can be observed that SVM and Gradient Boosting performed better than the other models, followed by Random Forest and logistic regression, while the Zero-inflated model had the poorest performance. Based on these results, we set the threshold for rat presence at 0.6. This threshold was selected as a balance between precision and recall, ensuring that the model can accurately predict the presence of rats while minimizing the risk of false positives. Any predicted probability above 0.6 is considered a positive prediction for rat presence, while any probability below 0.6 is considered a negative prediction for rat presence.
 
 ```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
 
-testProbs = data.frame(Outcome = as.factor(testing_data$activity),
-                       Probs = predict(reg_ALL, testing_data, type= "response"))
+# SVM prediction
 
-ggplot(testProbs, aes(x = Probs, fill = as.factor(Outcome))) + 
+SVM_testProbs = data.frame(Outcome = as.factor(SVM_test$activity),
+                       Probs = predict(svmModel, newdata = SVM_test))
+
+ggplot(SVM_testProbs, aes(x = Probs, fill = as.factor(Outcome))) +
   geom_density() +
   facet_grid(Outcome ~ .) +
   scale_fill_manual(values = c(bluePalette5[2], bluePalette5[4])) + xlim(0, 1) +
   geom_hline(yintercept = 0, size = 0.25, color = greyPalette5[3]) +
   geom_vline(xintercept = 0.5, size = 0.4, color = bluePalette5[3], linetype = "longdash") +
   labs(x = "Found", y = "Density",
-       title = "Logit Regression Model",
+       title = "Support Vector Machine Model",
        subtitle = "",
        caption = "")  +
   corTheme2()+
@@ -1189,12 +1199,26 @@ ggplot(testProbs, aes(x = Probs, fill = as.factor(Outcome))) +
         panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
         legend.position = "none")
 
-test_output <-
-  testing_data %>%
-  mutate(predOutcome= as.character(ifelse(testProbs$Probs > 0.6 , 1, 0)),
-         Probs = predict(Gbm_model, newdata = testing_data, type = "response"))
+# Gradient Boosting
 
-write.csv(test_output, file = "GB_results.csv", quote = F, row.names = T)
+Gbm_testProbs = data.frame(Outcome = as.factor(testing_data$activity),
+                       Probs = predict(Gbm_model, newdata = testing_data, type = "response"))
+
+ggplot(Gbm_testProbs, aes(x = Probs, fill = as.factor(Outcome))) +
+  geom_density() +
+  facet_grid(Outcome ~ .) +
+  scale_fill_manual(values = c(bluePalette5[2], bluePalette5[4])) + xlim(0, 1) +
+  geom_hline(yintercept = 0, size = 0.25, color = greyPalette5[3]) +
+  geom_vline(xintercept = 0.5, size = 0.4, color = bluePalette5[3], linetype = "longdash") +
+  labs(x = "Found", y = "Density",
+       title = "Gradient Boosting Model",
+       subtitle = "",
+       caption = "")  +
+  corTheme2()+
+  theme(panel.background = element_blank(),
+        panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
+        legend.position = "none")
+
 
 # Predict on test data
 
@@ -1222,25 +1246,31 @@ ggplot(RF_testProbs, aes(x = Probs, fill = as.factor(Outcome))) +
         panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
         legend.position = "none")
 
-# SVM prediction
+testProbs = data.frame(Outcome = as.factor(testing_data$activity),
+                       Probs = predict(reg_ALL, testing_data, type= "response"))
 
-SVM_testProbs = data.frame(Outcome = as.factor(SVM_test$activity),
-                       Probs = predict(svmModel, newdata = SVM_test))
-
-ggplot(SVM_testProbs, aes(x = Probs, fill = as.factor(Outcome))) +
+ggplot(testProbs, aes(x = Probs, fill = as.factor(Outcome))) + 
   geom_density() +
   facet_grid(Outcome ~ .) +
   scale_fill_manual(values = c(bluePalette5[2], bluePalette5[4])) + xlim(0, 1) +
   geom_hline(yintercept = 0, size = 0.25, color = greyPalette5[3]) +
   geom_vline(xintercept = 0.5, size = 0.4, color = bluePalette5[3], linetype = "longdash") +
   labs(x = "Found", y = "Density",
-       title = "Support Vector Machine Model",
+       title = "Logit Regression Model",
        subtitle = "",
        caption = "")  +
   corTheme2()+
   theme(panel.background = element_blank(),
         panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
         legend.position = "none")
+
+test_output <-
+  testing_data %>%
+  mutate(predOutcome= as.character(ifelse(testProbs$Probs > 0.6 , 1, 0)),
+         Probs = predict(Gbm_model, newdata = testing_data, type = "response"))
+
+# write.csv(test_output, file = "GB_results.csv", quote = F, row.names = T)
+
 
 # Zero-inflated prediction
 Zinf_testProbs = data.frame(Outcome = as.factor(testing_data$activity),
@@ -1260,33 +1290,16 @@ ggplot(Zinf_testProbs, aes(x = Probs, fill = as.factor(Outcome))) +
   theme(panel.background = element_blank(),
         panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
         legend.position = "none")
-# Gradient Boosting
-
-Gbm_testProbs = data.frame(Outcome = as.factor(testing_data$activity),
-                       Probs = predict(Gbm_model, newdata = testing_data, type = "response"))
-
-ggplot(Gbm_testProbs, aes(x = Probs, fill = as.factor(Outcome))) +
-  geom_density() +
-  facet_grid(Outcome ~ .) +
-  scale_fill_manual(values = c(bluePalette5[2], bluePalette5[4])) + xlim(0, 1) +
-  geom_hline(yintercept = 0, size = 0.25, color = greyPalette5[3]) +
-  geom_vline(xintercept = 0.5, size = 0.4, color = bluePalette5[3], linetype = "longdash") +
-  labs(x = "Found", y = "Density",
-       title = "Gradient Boosting Model",
-       subtitle = "",
-       caption = "")  +
-  corTheme2()+
-  theme(panel.background = element_blank(),
-        panel.grid.major.y = element_line(linetype = "dashed", size = 0.25, color = greyPalette5[2]),
-        legend.position = "none")
-
 
 ```
 
-## Ⅴ. Model validation
+## 4. Model validation
 
-### 5.1 Goodnees of fit
+We conducted a comprehensive evaluation of our developed rat prediction models. We assessed their goodness of fit, evaluated their ROC curves and AUC scores, performed 100-fold random cross-validation, conducted cost-benefit analysis, and optimized the model. These steps were taken to ensure that our models are reliable, accurate, and effective in predicting the presence of rats. By validating our models, we can gain confidence in their performance and suitability for use in real-world applications. Furthermore, model validation allows us to identify any weaknesses or limitations of our models and to take appropriate steps to address them.
 
+### 4.1 Goodnees of fit
+
+While goodness of fit analysis can involve several statistical metrics, in the context of our rat prediction models, we evaluated it primarily by comparing the confusion matrices of different models. Confusion matrices provide a detailed and comprehensive evaluation of the model's performance by comparing the predicted and observed values of the target variable. After analyzing the confusion matrices of our five models, we found that the SVM model had the highest accuracy in predicting the presence of rats, which has exceeded 71%. Based on this analysis, we selected the SVM model as the optimal model for predicting rat presence. The goodness of fit analysis, along with other evaluation metrics, helps us to identify the best model for our application and ensures that we can make reliable predictions about rat presence in a given location.
 
 ```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
 
@@ -1310,48 +1323,43 @@ GBM_testProbs <- Gbm_testProbs %>%
   mutate(predOutcome  = as.character(ifelse(Gbm_testProbs$Probs > 0.6 , 1, 0)),
          predOutcome_ft  = as.factor(ifelse(Gbm_testProbs$Probs > 0.6 , 1, 0)))
 
-cf_mtrix <- caret::confusionMatrix(testProbs$predOutcome_ft, testProbs$Outcome, positive = "1")
-
-
-Precision <-
-  cf_mtrix$table[2, 2] / (cf_mtrix$table[2, 2] + cf_mtrix$table[1, 2])
-  
-Recall <-
-  cf_mtrix$table[2, 2] / (cf_mtrix$table[2, 2] + cf_mtrix$table[2, 1])
-
-cf_mtrix
-
-cf_mtrix_table <- tidy(cf_mtrix$table)
-
-eval <- evaluate(
-  data = testProbs,
-  target_col = "Outcome",
-  prediction_cols = "predOutcome",
-  type = "binomial"
-)
-
-plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
-
-RF_cf_mtrix <- caret::confusionMatrix(RF_testProbs$predOutcome_ft, RF_testProbs$Outcome, positive = "1")
-
-RF_Precision <-
-  RF_cf_mtrix$table[2, 2] / (RF_cf_mtrix$table[2, 2] + RF_cf_mtrix$table[1, 2])
-
-RF_Recall <-
-  RF_cf_mtrix$table[2, 2] / (RF_cf_mtrix$table[2, 2] + RF_cf_mtrix$table[2, 1])
-
-RF_cf_mtrix
-
-RF_cf_mtrix_table <- tidy(RF_cf_mtrix$table)
-
-eval <- evaluate(
-  data = RF_testProbs,
-  target_col = "Outcome",
-  prediction_cols = "predOutcome",
-  type = "binomial"
-)
-
-plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
+# cf_mtrix <- caret::confusionMatrix(testProbs$predOutcome_ft, testProbs$Outcome, positive = "1")
+# 
+# 
+# 
+# cf_mtrix
+# 
+# cf_mtrix_table <- tidy(cf_mtrix$table)
+# 
+# eval <- evaluate(
+#   data = testProbs,
+#   target_col = "Outcome",
+#   prediction_cols = "predOutcome",
+#   type = "binomial"
+# )
+# 
+# plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
+# 
+# RF_cf_mtrix <- caret::confusionMatrix(RF_testProbs$predOutcome_ft, RF_testProbs$Outcome, positive = "1")
+# 
+# RF_Precision <-
+#   RF_cf_mtrix$table[2, 2] / (RF_cf_mtrix$table[2, 2] + RF_cf_mtrix$table[1, 2])
+# 
+# RF_Recall <-
+#   RF_cf_mtrix$table[2, 2] / (RF_cf_mtrix$table[2, 2] + RF_cf_mtrix$table[2, 1])
+# 
+# RF_cf_mtrix
+# 
+# RF_cf_mtrix_table <- tidy(RF_cf_mtrix$table)
+# 
+# eval <- evaluate(
+#   data = RF_testProbs,
+#   target_col = "Outcome",
+#   prediction_cols = "predOutcome",
+#   type = "binomial"
+# )
+# 
+# plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
 
 SVM_cf_mtrix <- caret::confusionMatrix(SVM_testProbs$predOutcome_ft, SVM_testProbs$Outcome, positive = "1")
 
@@ -1374,51 +1382,55 @@ eval <- evaluate(
 
 plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
 
-Zinf_cf_mtrix <- caret::confusionMatrix(Zinf_testProbs$predOutcome_ft, Zinf_testProbs$Outcome, positive = "1")
-
-Zinf_Precision <-
-  Zinf_cf_mtrix$table[2, 2] / (Zinf_cf_mtrix$table[2, 2] + Zinf_cf_mtrix$table[1, 2])
-
-Zinf_Recall <-
-  Zinf_cf_mtrix$table[2, 2] / (Zinf_cf_mtrix$table[2, 2] + Zinf_cf_mtrix$table[2, 1])
-
-Zinf_cf_mtrix
-
-Zinf_cf_mtrix_table <- tidy(Zinf_cf_mtrix$table)
-
-eval <- evaluate(
-  data = Zinf_testProbs,
-  target_col = "Outcome",
-  prediction_cols = "predOutcome",
-  type = "binomial"
-)
-plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
-
-GBM_cf_mtrix <- caret::confusionMatrix(GBM_testProbs$predOutcome_ft, GBM_testProbs$Outcome, positive = "1")
-
-GBM_Precision <-
-  GBM_cf_mtrix$table[2, 2] / (GBM_cf_mtrix$table[2, 2] + GBM_cf_mtrix$table[1, 2])
-
-GBM_Recall <-
-  GBM_cf_mtrix$table[2, 2] / (GBM_cf_mtrix$table[2, 2] + GBM_cf_mtrix$table[2, 1])
-
-GBM_cf_mtrix
-
-GBM_cf_mtrix_table <- tidy(GBM_cf_mtrix$table)
-
-eval <- evaluate(
-  data = GBM_testProbs,
-  target_col = "Outcome",
-  prediction_cols = "predOutcome",
-  type = "binomial"
-)
-plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
+# Zinf_cf_mtrix <- caret::confusionMatrix(Zinf_testProbs$predOutcome_ft, Zinf_testProbs$Outcome, positive = "1")
+# 
+# Zinf_Precision <-
+#   Zinf_cf_mtrix$table[2, 2] / (Zinf_cf_mtrix$table[2, 2] + Zinf_cf_mtrix$table[1, 2])
+# 
+# Zinf_Recall <-
+#   Zinf_cf_mtrix$table[2, 2] / (Zinf_cf_mtrix$table[2, 2] + Zinf_cf_mtrix$table[2, 1])
+# 
+# Zinf_cf_mtrix
+# 
+# Zinf_cf_mtrix_table <- tidy(Zinf_cf_mtrix$table)
+# 
+# eval <- evaluate(
+#   data = Zinf_testProbs,
+#   target_col = "Outcome",
+#   prediction_cols = "predOutcome",
+#   type = "binomial"
+# )
+# plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
+# 
+# GBM_cf_mtrix <- caret::confusionMatrix(GBM_testProbs$predOutcome_ft, GBM_testProbs$Outcome, positive = "1")
+# 
+# GBM_Precision <-
+#   GBM_cf_mtrix$table[2, 2] / (GBM_cf_mtrix$table[2, 2] + GBM_cf_mtrix$table[1, 2])
+# 
+# GBM_Recall <-
+#   GBM_cf_mtrix$table[2, 2] / (GBM_cf_mtrix$table[2, 2] + GBM_cf_mtrix$table[2, 1])
+# 
+# GBM_cf_mtrix
+# 
+# GBM_cf_mtrix_table <- tidy(GBM_cf_mtrix$table)
+# 
+# eval <- evaluate(
+#   data = GBM_testProbs,
+#   target_col = "Outcome",
+#   prediction_cols = "predOutcome",
+#   type = "binomial"
+# )
+# plot_confusion_matrix(eval[["Confusion Matrix"]][[1]])
 
 
 ```
 
 
-### 5.2 ROC(AUC)
+### 4.2 ROC(AUC)
+
+ROC (Receiver Operating Characteristic) is a graphical representation of a binary classification model's performance. It displays the trade-off between the sensitivity and specificity of the model as the threshold for classifying a positive prediction is varied. The ROC curve plots the true positive rate (TPR) against the false positive rate (FPR) at different threshold values. The area under the curve (AUC) is a commonly used metric to quantify the overall performance of the model, where an AUC of 1 indicates perfect performance and an AUC of 0.5 indicates that the model is no better than random guessing.
+
+In our rat prediction models, we evaluated the ROC curves and AUC scores to assess the performance of each model. After analyzing the ROC curves and calculating the AUC scores, we found that the best-performing model had an AUC of 0.8. This indicates that the model has good predictive power and performs better than random guessing. An AUC of 0.8 suggests that the model can accurately classify rat presence and absence with 80% accuracy, making it a reliable model for predicting rat presence in a given location.
   
 ```{r fig.keep='all', message=FALSE, warning=FALSE, out.width='100%', results='hide'}
 
@@ -1443,8 +1455,15 @@ ggplot(SVM_testProbs, aes(d = as.numeric(SVM_testProbs$Outcome), m = Probs)) +
 
 ```
 
-### 5.3 Cross Validation
+### 4.3 Cross Validation
 
+Cross-validation is a statistical technique used to assess the performance and generalizability of a machine learning model. In our rat prediction models, we used 100-fold random cross-validation to evaluate the performance.
+
+During the cross-validation process, we split the dataset into 100 subsets, each containing an equal number of rat presence and absence samples. We then trained and tested the model 100 times, with each iteration using a different subset for testing and the remaining subsets for training.
+
+After analyzing the cross-validation results, we found that the sensitivity scores of the models were generally high, with most of them clustering around 0.87. This suggests that the models were able to correctly identify a high percentage of the true positive cases. However, the specificity scores were more varied, with a median value of around 0.75. This indicates that the models had more difficulty identifying true negative cases, leading to a wider spread of the specificity scores.
+
+By performing cross-validation, we were able to assess the generalizability of our models and obtain more reliable estimates of their performance. The results of the cross-validation analysis helped us to identify areas for improvement and make informed decisions about model selection and parameter tuning.
 
 ```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
 
@@ -1489,8 +1508,9 @@ dplyr::select(cv$resample, -Resample) %>%
 
 ```
 
-### 5.4 Cost Benefit Analysis
+### 4.4 Cost Benefit Analysis
 
+The choice of weights for cost-benefit analysis will depend on the specific context and priorities of the problem being addressed. In this case, we set +50 for True Positive and True Negative, -100 for False Negative, and -25 for False Positive. A False Negative in rat prediction could lead to health risks for humans and property damage, while a False Positive may result in unnecessary costs for rat control. The cost of the consequences should be weighed against the cost of implementing the control measures. In addition, the weights should also reflect the resources available for rat control and the importance of accurately predicting rat presence. For example, if the cost of rat control is high, then the weight for False Positive may need to be higher to avoid unnecessary costs. Ultimately, the choice of weights for cost-benefit analysis should be made in consultation with stakeholders and decision-makers who have the necessary expertise and knowledge of the specific problem and context.
 
 ```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
 
@@ -1525,7 +1545,11 @@ kable(cost_benefit_table, caption = "<center><span style='font-size:14px; color:
 ```
 
 
-### 5.5 Optimizing the Cost/Benefit Relationship
+### 4.5 Optimizing the cost/benefit relationship
+
+In this section, the focus is on optimizing the cost/benefit relationship by determining the optimal threshold for the rat prediction model. To optimize the cost/benefit relationship, a function is created to loop through different threshold values and calculate the corresponding confusion matrix and cost/benefit for each threshold. The revenue is then totaled for each threshold, and the results are visualized to determine the optimal threshold. The plot below is the changes of weighted value for each confusion matrix type and threshold. True positive type remains stable until the threshold of 0.3, then gradually decline to 0, while false negative type starts from 0 and drops all the time. 
+
+The weighted value plot shows that the best threshold is 0.2, By optimizing the threshold, we can improve the overall performance and effectiveness of the rat prediction model.
 
 ```{r message=FALSE, warning=FALSE, out.width = '100%'}
 
@@ -1599,7 +1623,9 @@ ggplot(whichThreshold_cb, aes(Threshold, Weighted_Value)) +
 
 ```
 
-### 5.6 Optimized model
+### 4.6 Optimized model
+
+When we set the threshold as 0.2, the outcome is shown below, which indicates that the sensitivity is extremely high across all 100 folds, while the specificity decreased a lot and means that there is a large number of false negatives.
 
 ```{r message=FALSE, warning=FALSE, out.width = '100%', results='hide', fig.keep='all'}
 

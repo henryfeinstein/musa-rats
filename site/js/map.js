@@ -71,6 +71,9 @@ async function initializeBlocks(map) {
     // pull city block shapefile
     let blocks = await fetchJSON('./data/city_blocks.geojson');
 
+    // pull model results
+    let block_results = await fetchJSON('./data/GB_results.json');
+
     map.on('load', () => {
         // Add a data source containing GeoJSON data.
         map.addSource('blocks-boundary', {
@@ -146,6 +149,12 @@ async function initializeBlocks(map) {
         let features = map.queryRenderedFeatures(e.point, { layers: ['blocks'] });
         console.log(features);
         let clicked_block = features[0].toJSON()['properties']['block_id'];
+        let clicked_block_info = block_results.filter(function(data) {
+            return data.block_id === clicked_block;
+        });
+
+        console.log(clicked_block);
+        console.log(clicked_block_info);
 
         // $("#geocoder-roof").trigger('change');
 
@@ -197,10 +206,21 @@ async function initializeBlocks(map) {
 
         myLayers.push('selectedBlock');
 
-        new mapboxgl.Popup()
+        if (clicked_block_info[0]) {
+            new mapboxgl.Popup()
             .setLngLat(e.lngLat)
-            .setHTML(e.features[0].properties.block_id)
+            // .setHTML(e.features[0].properties.block_id)
+            .setHTML(`
+                <span>Last Inspection: ${clicked_block_info[0].INSPECTIONDATE}</span>
+            `)
             .addTo(map);
+        } else {
+            new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`No Inspection History Available`)
+            .addTo(map);
+        }
+
     });
 
     map.on('mouseenter', 'blocks', () => {
