@@ -72,7 +72,7 @@ async function initializeBlocks(map) {
     let blocks = await fetchJSON('./data/city_blocks.geojson');
 
     // pull model results
-    let block_results = await fetchJSON('./data/GB_results.json');
+    let block_results = await fetchJSON('./data/SVM_results.json');
 
     map.on('load', () => {
         // Add a data source containing GeoJSON data.
@@ -211,7 +211,9 @@ async function initializeBlocks(map) {
             .setLngLat(e.lngLat)
             // .setHTML(e.features[0].properties.block_id)
             .setHTML(`
-                <span>Last Inspection: ${clicked_block_info[0].INSPECTIONDATE}</span>
+                <span>Last Inspection: ${clicked_block_info[0].INSPECTIONDATE}</span><br>
+                <span>Inspection Notes: ${clicked_block_info[0].SERVICENOTES}</span><br>
+                <span>Rat Probability: ${clicked_block_info[0].Probs}</span>
             `)
             .addTo(map);
         } else {

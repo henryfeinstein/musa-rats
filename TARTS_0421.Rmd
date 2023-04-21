@@ -81,6 +81,7 @@ library(rpart) # Decision Tree
 library(irr)
 library(MLmetrics)
 library(riem)
+library(rjson)
 
 #----------------------------------------------------------------------------------------------------------  
 
@@ -1183,6 +1184,14 @@ As our prediction results are probabilities, we need to define a threshold to de
 
 SVM_testProbs = data.frame(Outcome = as.factor(SVM_test$activity),
                        Probs = predict(svmModel, newdata = SVM_test))
+
+test_output <-
+  testing_data %>%
+  mutate(predOutcome= as.factor(SVM_test$activity),
+         Probs = predict(svmModel, newdata = SVM_test)) %>% 
+  jsonlite::toJSON(x = ., dataframe = 'rows')
+
+write(test_output, "csv_results/SVM_results.json")
 
 ggplot(SVM_testProbs, aes(x = Probs, fill = as.factor(Outcome))) +
   geom_density() +
