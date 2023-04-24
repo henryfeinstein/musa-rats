@@ -211,15 +211,30 @@ async function initializeBlocks(map) {
             .setLngLat(e.lngLat)
             // .setHTML(e.features[0].properties.block_id)
             .setHTML(`
-                <span>Last Inspection: ${clicked_block_info[0].INSPECTIONDATE}</span><br>
-                <span>Inspection Notes: ${clicked_block_info[0].SERVICENOTES}</span><br>
-                <span>Rat Probability: ${clicked_block_info[0].Probs}</span>
+                <div class="block-popup">
+                    <div class="popup-item">
+                        <span class="popup-title">Last Inspection: </span>
+                        <span class="popup-info">${clicked_block_info[0].INSPECTIONDATE}</span>
+                    </div>
+                    <div class="popup-item">
+                        <span class="popup-title">Inspection Notes: </span>
+                        <span class="popup-info">${clicked_block_info[0].SERVICENOTES}</span>
+                    </div>
+                    <div class="popup-item">
+                        <span class="popup-title">Rat Probability: </span>
+                        <span class="popup-info">${clicked_block_info[0].Probs}</span>
+                    </div>
+                </div>
             `)
             .addTo(map);
         } else {
             new mapboxgl.Popup()
             .setLngLat(e.lngLat)
-            .setHTML(`No Inspection History Available`)
+            .setHTML(`
+            <div class="block-popup"
+                <span class="popup-title">No Inspection History Available</span>
+            </div>
+            `)
             .addTo(map);
         }
 
@@ -361,13 +376,13 @@ $("#rats-hotspots").click(function(){
               'interpolate',
               ['linear'],
               ['get', 'Rat_Count'],
-                2, 'rgb(235,59,31)',
-                7, 'rgb(243,175,36)',
-                16, 'rgb(84,159,40)',
-                35, 'rgb(33,86,254)',
-                52, 'rgb(31,3,106)'
+                0, 'rgb(235,59,31)',
+                1, 'rgb(243,175,36)',
+                2, 'rgb(84,159,40)',
+                3, 'rgb(33,86,254)',
+                4, 'rgb(31,3,106)'
             ],
-            'fill-opacity': 0.7
+            'fill-opacity': 0.4
         }
     });
     myLayers.push('rats-hotspot');
@@ -397,7 +412,7 @@ $("#311-hotspots").click(function(){
             235, 'rgb(56,3,219)',
             452, 'rgb(31,3,106)'
         ],
-        'fill-opacity': 0.7
+        'fill-opacity': 0.4
       }
     });
     myLayers.push('call-hotspot');

@@ -70,6 +70,21 @@ h1 {
   font-size: larger;
 }
 
+.block-popup {
+  display: flex;
+  flex-direction: column;
+  font-family: 'Reem Kufi', sans-serif;
+  font-size: large;
+}
+
+.popup-item {
+  margin-bottom: 0.5rem;
+}
+
+.popup-title {
+  font-weight: 700;
+}
+
 .pressed {
   background-color: red;
   color: white;
