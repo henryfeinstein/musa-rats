@@ -223,6 +223,7 @@ async function initializeBlocks(map) {
             .addTo(map);
         }
 
+
     });
 
     map.on('mouseenter', 'blocks', () => {
@@ -305,7 +306,22 @@ function clearLayers(map) {
             }
         }
     }
+
+    // reset formatting on block and ward layers 
+    if (typeof map.getLayer('selectedBlock') !== "undefined" ){
+        map.removeLayer('selectedBlock');
+        map.removeSource('selectedBlock');
+    }
+    if (typeof map.getLayer('selectedWard') !== "undefined" ){
+        map.removeLayer('selectedWard');
+        map.removeSource('selectedWard');
+    }
+
 }
+
+$("#clear-map").click(function() {
+    clearLayers(map);
+});
 
 $("#rats-hotspots").click(function(){
 
