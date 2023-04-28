@@ -36,9 +36,9 @@ async function initializeMap() {
     map.addControl(new mapboxgl.NavigationControl());
 
     // load data for hotspots
-    let ratHotspot = await fetchJSON('./data/rat_hotspot.geojson');
-    let callHotspot = await fetchJSON('./data/req_hotspot.geojson');
-    let wards = await fetchJSON('./data/Wards.geojson');
+    let ratHotspot = await fetchJSON('https://storage.googleapis.com/rats_app_data/rat_hotspot.geojson');
+    let callHotspot = await fetchJSON('https://storage.googleapis.com/rats_app_data/req_hotspot.geojson');
+    let wards = await fetchJSON('https://storage.googleapis.com/rats_app_data/Wards.geojson');
 
     // store my layers, for the convenience of removing
     let myLayers = [];
@@ -69,10 +69,10 @@ async function initializeMap() {
 
 async function initializeBlocks(map) {
     // pull city block shapefile
-    let blocks = await fetchJSON('./data/city_blocks.geojson');
+    let blocks = await fetchJSON('https://storage.googleapis.com/rats_app_data/city_blocks.geojson');
 
     // pull model results
-    let block_results = await fetchJSON('./data/SVM_results.json');
+    let block_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/SVM_results.json');
 
     // assign rat prob to each block
     for (let i in blocks.features) {
@@ -356,7 +356,7 @@ function clearLayers(map) {
         }
     }
 
-    // reset formatting on block and ward layers 
+    // reset formatting on block and ward layers
     if (typeof map.getLayer('selectedBlock') !== "undefined" ){
         map.removeLayer('selectedBlock');
         map.removeSource('selectedBlock');
@@ -376,30 +376,6 @@ $("#rats-hotspots").click(function(){
 
     clearLayers(map);
 
-    // map.addLayer({
-    //   'id': 'call-hotspot',
-    //   'type': 'fill',
-    //   'source': 'rats-hotspot',
-    //   'layout': {},
-    //   'paint': {
-    //     'fill-color': [
-    //       'interpolate',
-    //       ['linear'],
-    //       ['get', 'Rat_Count'], // 用于渐变的属性
-    //         7, 'rgb(235,59,31)',
-    //         20, 'rgb(255,129,43)',
-    //         36, 'rgb(243,175,36)',
-    //         56, 'rgb(149,210,105)',
-    //         83, 'rgb(84,159,40)',
-    //         119, 'rgb(81,120,254)',
-    //         165, 'rgb(33,86,254)',
-    //         235, 'rgb(56,3,219)',
-    //         452, 'rgb(31,3,106)' // 从0到100的范围内渐变颜色
-    //     ],
-    //     'fill-opacity': 0.7
-    //   }
-    // });
-
     map.addLayer({
         'id': 'rats-hotspot',
         'type': 'fill',
@@ -410,11 +386,11 @@ $("#rats-hotspots").click(function(){
               'interpolate',
               ['linear'],
               ['get', 'Rat_Count'],
-                0, 'rgb(235,59,31)',
-                1, 'rgb(243,175,36)',
-                2, 'rgb(84,159,40)',
-                3, 'rgb(33,86,254)',
-                4, 'rgb(31,3,106)'
+                1, 'rgb(241,47,47)',
+                7, 'rgb(243,175,36)',
+                16, 'rgb(84,159,40)',
+                35, 'rgb(33,86,254)',
+                52, 'rgb(31,3,106)'
             ],
             'fill-opacity': 0.4
         }
