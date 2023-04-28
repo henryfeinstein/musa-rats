@@ -74,6 +74,18 @@ async function initializeBlocks(map) {
     // pull model results
     let block_results = await fetchJSON('./data/SVM_results.json');
 
+    // assign rat prob to each block
+    for (let i in blocks.features) {
+        let blockDat = block_results.filter(function(data) {
+            return data.block_id === blocks.features[i].properties.block_id;
+        });
+        if (blockDat[0]) {
+            blocks.features[i].properties.ratProb = blockDat[0].Probs;
+        } else {
+            blocks.features[i].properties.ratProb = 0;
+        }
+    }
+
     map.on('load', () => {
         // Add a data source containing GeoJSON data.
         map.addSource('blocks-boundary', {
@@ -88,13 +100,38 @@ async function initializeBlocks(map) {
             'layout': {},
             'generateId': true,
             'paint': {
-                // 'fill-color': '#0080ff', // blue color fill
-                // 'fill-opacity': 0,
-                'fill-outline-color': 'rgba(0,0,0,0.1)',
-                // 'fill-color': '#627BC1',
-                'fill-opacity': 0.1,
-            },
+                'fill-color': [
+                  'interpolate',
+                  ['linear'],
+                  ['get', 'ratProb'],
+                    0, 'rgba(0,0,0,0.1)',
+                    1, '#fa0808'
+                ],
+                'fill-opacity': 0.4
+            }
         });
+
+        // 'paint': {
+        //     // 'fill-color': '#0080ff', // blue color fill
+        //     // 'fill-opacity': 0,
+        //     'fill-outline-color': 'rgba(0,0,0,0.1)',
+        //     // 'fill-color': '#627BC1',
+        //     'fill-opacity': 0.1,
+        // },
+
+        // 'paint': {
+        //     'fill-color': [
+        //       'interpolate',
+        //       ['linear'],
+        //       ['get', 'Rat_Count'],
+        //         0, 'rgb(235,59,31)',
+        //         1, 'rgb(243,175,36)',
+        //         2, 'rgb(84,159,40)',
+        //         3, 'rgb(33,86,254)',
+        //         4, 'rgb(31,3,106)'
+        //     ],
+        //     'fill-opacity': 0.4
+        // }
 
         myLayers.push('blocks');
 
@@ -152,9 +189,6 @@ async function initializeBlocks(map) {
         let clicked_block_info = block_results.filter(function(data) {
             return data.block_id === clicked_block;
         });
-
-        console.log(clicked_block);
-        console.log(clicked_block_info);
 
         // $("#geocoder-roof").trigger('change');
 
