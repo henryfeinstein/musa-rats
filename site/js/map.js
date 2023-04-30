@@ -70,6 +70,7 @@ async function initializeMap() {
 async function initializeBlocks(map) {
     // pull city block shapefile
     let blocks = await fetchJSON('https://storage.googleapis.com/rats_app_data/city_blocks.geojson');
+    console.log(blocks);
 
     // pull model results
     let block_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/SVM_results.json');
@@ -87,6 +88,7 @@ async function initializeBlocks(map) {
     }
 
     map.on('load', () => {
+        console.log("loading blocks");
         // Add a data source containing GeoJSON data.
         map.addSource('blocks-boundary', {
             'type': 'geojson',
