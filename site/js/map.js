@@ -1,4 +1,5 @@
 import { fetchJSON } from "./utils.js";
+// import { tag } from "turf";
 
 mapboxgl.accessToken = 'pk.eyJ1IjoieWVzZW5pYW8iLCJhIjoiY2tlZjAyM3p5MDNnMjJycW85bmpjenFkOCJ9.TDYe7XRNP8CnAto0kLA5zA';
 
@@ -52,8 +53,6 @@ async function initializeMap() {
         'data': ratHotspot
     });
 
-    console.log(ratHotspot)
-
     map.addSource('call-hotspot', {
         'type': 'geojson',
         'data': callHotspot
@@ -67,27 +66,62 @@ async function initializeMap() {
     return map;
 }
 
-async function initializeBlocks(map) {
-    // pull city block shapefile
-    let blocks = await fetchJSON('https://storage.googleapis.com/rats_app_data/city_blocks.geojson');
-    console.log(blocks);
+async function initializeBlocks(map, newData = false) {
 
-    // pull model results
-    let block_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/SVM_results.json');
-
-    // assign rat prob to each block
-    for (let i in blocks.features) {
-        let blockDat = block_results.filter(function(data) {
-            return data.block_id === blocks.features[i].properties.block_id;
-        });
-        if (blockDat[0]) {
-            blocks.features[i].properties.ratProb = blockDat[0].Probs;
-        } else {
-            blocks.features[i].properties.ratProb = 0;
+    if (map.getLayer('blocks')){
+        map.removeLayer('blocks');
+        map.removeLayer('outline');
+        map.removeLayer('wards');
+        map.removeLayer('ward_outline');
+        map.removeSource('blocks-boundary');
+        if (map.getLayer('selectedBlock')){
+            map.removeLayer('selectedBlock');
+            map.removeSource('selectedBlock');
         }
     }
+    
+    // pull city block shapefile
+    let blocks = await fetchJSON('https://storage.googleapis.com/rats_app_data/city_blocks.geojson');
+    window.blocks = blocks;
 
-    map.on('load', () => {
+    let block_results;
+
+    // if newData = true, pull new data from storage; otherwise, pull full SVM results
+    if (newData) {
+        block_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/rodent_2018.geojson');
+        block_results.features = block_results.features.slice(0, 100);
+        // join recent data to block number in order to visualize 
+        block_results = turf.tag(block_results, blocks, 'block_id', 'block_id');
+            // assign rat prob to each block
+        for (let i in blocks.features) {
+            let blockDat = block_results.features.filter(function(data) {
+                return data.block_id === blocks.features[i].properties.block_id;
+            });
+            if (blockDat[0]) {
+                blocks.features[i].properties.ratProb = blockDat[0].Probs;
+            } else {
+                blocks.features[i].properties.ratProb = 0;
+            }
+        }
+    } else {
+        block_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/SVM_results.json');
+            // assign rat prob to each block
+        for (let i in blocks.features) {
+            let blockDat = block_results.filter(function(data) {
+                return data.block_id === blocks.features[i].properties.block_id;
+            });
+            if (blockDat[0]) {
+                blocks.features[i].properties.ratProb = blockDat[0].Probs;
+            } else {
+                blocks.features[i].properties.ratProb = 0;
+            }
+        }
+    }
+    
+
+
+
+    //map.on('load', () => {
         console.log("loading blocks");
         // Add a data source containing GeoJSON data.
         map.addSource('blocks-boundary', {
@@ -180,17 +214,31 @@ async function initializeBlocks(map) {
 
         myLayers.push('ward_outline');
 
-    });
+   // });
 
     // When clicked, show the block information
     map.on('click', 'blocks', (e) => {
+        if (map.getLayer('selectedBlock')){
+            map.removeLayer('selectedBlock');
+            map.removeSource('selectedBlock');
+            console.log("removing layer");
+        }
         console.log(e)
         let features = map.queryRenderedFeatures(e.point, { layers: ['blocks'] });
         console.log(features);
         let clicked_block = features[0].toJSON()['properties']['block_id'];
-        let clicked_block_info = block_results.filter(function(data) {
-            return data.block_id === clicked_block;
-        });
+        console.log(clicked_block);
+        let clicked_block_info;
+        if (newData) {
+            clicked_block_info = block_results.features.filter(function(data) {
+                return data.block_id === clicked_block;
+            });
+        } else {
+            clicked_block_info = block_results.filter(function(data) {
+                return data.block_id === clicked_block;
+            });
+        }
+        
 
         // $("#geocoder-roof").trigger('change');
 
@@ -216,11 +264,6 @@ async function initializeBlocks(map) {
         });
 
         let feature = features[0].toJSON();
-
-        if (typeof map.getLayer('selectedBlock') !== "undefined" ){
-            map.removeLayer('selectedBlock');
-            map.removeSource('selectedBlock');
-        }
 
         map.addSource('selectedBlock', {
             "type":"geojson",
@@ -348,7 +391,9 @@ function clearLayers(map) {
     let basic_layers = ['blocks', 'outline', 'wards', 'ward_outline'];
     for (let i = 0; i < myLayers.length; i++) {
         if (basic_layers.indexOf(myLayers[i]) === -1) {
-            map.removeLayer(myLayers[i]);
+            if (map.getLayer(myLayers[i])) {
+                map.removeLayer(myLayers[i]);
+            }
 
             // delete the layerId in myLayers
             let index = myLayers.indexOf(3); // find the index of the element to be removed
@@ -359,11 +404,11 @@ function clearLayers(map) {
     }
 
     // reset formatting on block and ward layers
-    if (typeof map.getLayer('selectedBlock') !== "undefined" ){
+    if (map.getLayer('selectedBlock')){
         map.removeLayer('selectedBlock');
         map.removeSource('selectedBlock');
     }
-    if (typeof map.getLayer('selectedWard') !== "undefined" ){
+    if (map.getLayer('selectedWard')){
         map.removeLayer('selectedWard');
         map.removeSource('selectedWard');
     }
@@ -428,6 +473,11 @@ $("#311-hotspots").click(function(){
       }
     });
     myLayers.push('call-hotspot');
+});
+
+$("#show-recent-data").click(function() {
+    clearLayers(map);
+    initializeBlocks(map, true);
 });
 
 export {

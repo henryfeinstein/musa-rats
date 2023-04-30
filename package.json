@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/henryfeinstein/musa-rats#readme",
   "dependencies": {
+    "@turf/tag": "^6.5.0",
     "convert-csv-to-json": "^2.0.0"
   }
 }

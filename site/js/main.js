@@ -1,5 +1,5 @@
 import { initializeBlocks, initializeMap } from "./map.js";
-import { parseRequestData, buildPredictionList } from "./dataProcessing.js";
+import { parseRequestData } from "./dataProcessing.js";
 
 // initialize site
 let map = await initializeMap();

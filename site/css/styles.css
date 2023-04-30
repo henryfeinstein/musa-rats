@@ -140,8 +140,8 @@ h1 {
 .slider-container {
   position: absolute;
   top: 13%;
-  width: 80%;
-  left: 10%;
+  width: 90%;
+  left: 5%;
   /*height: 8%;*/
   overflow-x: scroll;
   white-space: nowrap;
