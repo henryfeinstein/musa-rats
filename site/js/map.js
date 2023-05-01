@@ -66,6 +66,108 @@ async function initializeMap() {
     return map;
 }
 
+const onBlockClick = function (e, newData, block_results) {
+    if (map.getLayer('selectedBlock') !== undefined){
+        map.removeLayer('selectedBlock');
+        map.removeSource('selectedBlock');
+        console.log("removing layer");
+    }
+    console.log(e)
+    let features = map.queryRenderedFeatures(e.point, { layers: ['blocks'] });
+    console.log(features);
+    let clicked_block = features[0].toJSON()['properties']['block_id'];
+    console.log(clicked_block);
+    let clicked_block_info;
+    if (newData) {
+        clicked_block_info = block_results.features.filter(function(data) {
+            return data.block_id === clicked_block;
+        });
+    } else {
+        clicked_block_info = block_results.filter(function(data) {
+            return data.block_id === clicked_block;
+        });
+    }
+    console.log(clicked_block_info);
+    
+
+    // $("#geocoder-roof").trigger('change');
+
+    // clicked_address = "";
+
+    const coordinates = features[0].toJSON()["geometry"]["coordinates"][0];
+
+    // Create a 'LngLatBounds' with both corners at the first coordinate.
+    const bounds = new mapboxgl.LngLatBounds(
+        coordinates[0],
+        coordinates[0]
+    );
+
+    // Extend the 'LngLatBounds' to include every coordinate in the bounds result.
+    for (const coord of coordinates) {
+        bounds.extend(coord);
+    }
+
+    map.fitBounds(bounds, {
+        padding: 20
+    });
+
+    let feature = features[0].toJSON();
+
+    map.addSource('selectedBlock', {
+        "type":"geojson",
+        "data": feature,
+    });
+    map.addLayer({
+        "id": "selectedBlock",
+        "type": "line",
+        "source": "selectedBlock",
+        "layout": {
+            "line-join": "round",
+            "line-cap": "round",
+        },
+        "paint": {
+            "line-color": "white",
+            "line-width": 6,
+        },
+    });
+
+    myLayers.push('selectedBlock');
+
+    $('.mapboxgl-popup').remove();
+
+    if (clicked_block_info[0]) {
+        new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        // .setHTML(e.features[0].properties.block_id)
+        .setHTML(`
+            <div class="block-popup">
+                <div class="popup-item">
+                    <span class="popup-title">Last Inspection: </span>
+                    <span class="popup-info">${clicked_block_info[0].INSPECTIONDATE}</span>
+                </div>
+                <div class="popup-item">
+                    <span class="popup-title">Inspection Notes: </span>
+                    <span class="popup-info">${clicked_block_info[0].SERVICENOTES}</span>
+                </div>
+                <div class="popup-item">
+                    <span class="popup-title">Rat Probability: </span>
+                    <span class="popup-info">${clicked_block_info[0].Probs}</span>
+                </div>
+            </div>
+        `)
+        .addTo(map);
+    } else {
+        new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(`
+        <div class="block-popup"
+            <span class="popup-title">No Inspection History Available</span>
+        </div>
+        `)
+        .addTo(map);
+    }
+}
+
 async function initializeBlocks(map, newData = false) {
 
     if (map.getLayer('blocks') !== undefined){
@@ -88,7 +190,6 @@ async function initializeBlocks(map, newData = false) {
 
     // pull model results
     let svm_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/SVM_results.json');
-    console.log(svm_results);
 
     let block_results;
 
@@ -144,7 +245,6 @@ async function initializeBlocks(map, newData = false) {
     
     //map.on('load', () => {
         console.log("loading blocks");
-        console.log(blocks);
         // Add a data source containing GeoJSON data.
         map.addSource('blocks-boundary', {
             'type': 'geojson',
@@ -217,109 +317,8 @@ async function initializeBlocks(map, newData = false) {
    // });
 
     // When clicked, show the block information
-    map.on('click', 'blocks', (e) => {
-        if (map.getLayer('selectedBlock') !== undefined){
-            map.removeLayer('selectedBlock');
-            map.removeSource('selectedBlock');
-            console.log("removing layer");
-        }
-        console.log(e)
-        let features = map.queryRenderedFeatures(e.point, { layers: ['blocks'] });
-        console.log(features);
-        let clicked_block = features[0].toJSON()['properties']['block_id'];
-        console.log(clicked_block);
-        let clicked_block_info;
-        if (newData) {
-            clicked_block_info = block_results.features.filter(function(data) {
-                return data.block_id === clicked_block;
-            });
-        } else {
-            clicked_block_info = block_results.filter(function(data) {
-                return data.block_id === clicked_block;
-            });
-        }
-        console.log(clicked_block_info);
-        
-
-        // $("#geocoder-roof").trigger('change');
-
-        // clicked_address = "";
-
-        const coordinates = features[0].toJSON()["geometry"]["coordinates"][0];
-
-        // Create a 'LngLatBounds' with both corners at the first coordinate.
-        const bounds = new mapboxgl.LngLatBounds(
-            coordinates[0],
-            coordinates[0]
-        );
-
-        console.log(bounds)
-
-        // Extend the 'LngLatBounds' to include every coordinate in the bounds result.
-        for (const coord of coordinates) {
-            bounds.extend(coord);
-        }
-
-        map.fitBounds(bounds, {
-            padding: 20
-        });
-
-        let feature = features[0].toJSON();
-
-        map.addSource('selectedBlock', {
-            "type":"geojson",
-            "data": feature,
-        });
-        map.addLayer({
-            "id": "selectedBlock",
-            "type": "line",
-            "source": "selectedBlock",
-            "layout": {
-                "line-join": "round",
-                "line-cap": "round",
-            },
-            "paint": {
-                "line-color": "white",
-                "line-width": 6,
-            },
-        });
-
-        myLayers.push('selectedBlock');
-
-        if (clicked_block_info[0]) {
-            new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            // .setHTML(e.features[0].properties.block_id)
-            .setHTML(`
-                <div class="block-popup">
-                    <div class="popup-item">
-                        <span class="popup-title">Last Inspection: </span>
-                        <span class="popup-info">${clicked_block_info[0].INSPECTIONDATE}</span>
-                    </div>
-                    <div class="popup-item">
-                        <span class="popup-title">Inspection Notes: </span>
-                        <span class="popup-info">${clicked_block_info[0].SERVICENOTES}</span>
-                    </div>
-                    <div class="popup-item">
-                        <span class="popup-title">Rat Probability: </span>
-                        <span class="popup-info">${clicked_block_info[0].Probs}</span>
-                    </div>
-                </div>
-            `)
-            .addTo(map);
-        } else {
-            new mapboxgl.Popup()
-            .setLngLat(e.lngLat)
-            .setHTML(`
-            <div class="block-popup"
-                <span class="popup-title">No Inspection History Available</span>
-            </div>
-            `)
-            .addTo(map);
-        }
-
-
-    });
+    map.off('click', 'blocks', (e) => onBlockClick(e, newData, block_results));
+    map.on('click', 'blocks', (e) => onBlockClick(e, newData, block_results));
 
     map.on('mouseenter', 'blocks', () => {
         map.getCanvas().style.cursor = 'pointer';
@@ -389,8 +388,6 @@ $("#select-ward").change(function(){
 // Clear all layers except for the basic layers: ward_outline, wards, blocks-boundary, blocks
 
 function clearLayers(map) {
-    console.log("firing clearLayers");
-    console.log(map.getLayer('selectedBlock'));
 
     // reset formatting on block and ward layers
     if (map.getLayer('selectedBlock') !== undefined){
