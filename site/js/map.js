@@ -78,9 +78,10 @@ const onBlockClick = function (e, newData, block_results) {
     let clicked_block = features[0].toJSON()['properties']['block_id'];
     console.log(clicked_block);
     let clicked_block_info;
+    console.log(block_results);
     if (newData) {
         clicked_block_info = block_results.features.filter(function(data) {
-            return data.block_id === clicked_block;
+            return data.properties.block_id === clicked_block;
         });
     } else {
         clicked_block_info = block_results.filter(function(data) {
@@ -136,35 +137,65 @@ const onBlockClick = function (e, newData, block_results) {
     $('.mapboxgl-popup').remove();
 
     if (clicked_block_info[0]) {
-        new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        // .setHTML(e.features[0].properties.block_id)
-        .setHTML(`
-            <div class="block-popup">
-                <div class="popup-item">
-                    <span class="popup-title">Last Inspection: </span>
-                    <span class="popup-info">${clicked_block_info[0].INSPECTIONDATE}</span>
+        if (newData) {
+            new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            // .setHTML(e.features[0].properties.block_id)
+            .setHTML(`
+                <div class="block-popup">
+                    <div class="popup-item">
+                        <span class="popup-title">Service Order Date: </span>
+                        <span class="popup-info">${clicked_block_info[0].properties.SERVICEORDERDATE}</span>
+                    </div>
+                    <div class="popup-item">
+                        <span class="popup-title">Rat Probability: </span>
+                        <span class="popup-info">${clicked_block_info[0].properties.ratProb}</span>
+                    </div>
                 </div>
-                <div class="popup-item">
-                    <span class="popup-title">Inspection Notes: </span>
-                    <span class="popup-info">${clicked_block_info[0].SERVICENOTES}</span>
+            `)
+            .addTo(map);
+        } else {
+            new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            // .setHTML(e.features[0].properties.block_id)
+            .setHTML(`
+                <div class="block-popup">
+                    <div class="popup-item">
+                        <span class="popup-title">Last Inspection: </span>
+                        <span class="popup-info">${clicked_block_info[0].INSPECTIONDATE}</span>
+                    </div>
+                    <div class="popup-item">
+                        <span class="popup-title">Inspection Notes: </span>
+                        <span class="popup-info">${clicked_block_info[0].SERVICENOTES}</span>
+                    </div>
+                    <div class="popup-item">
+                        <span class="popup-title">Rat Probability: </span>
+                        <span class="popup-info">${clicked_block_info[0].Probs}</span>
+                    </div>
                 </div>
-                <div class="popup-item">
-                    <span class="popup-title">Rat Probability: </span>
-                    <span class="popup-info">${clicked_block_info[0].Probs}</span>
-                </div>
-            </div>
-        `)
-        .addTo(map);
+            `)
+            .addTo(map);
+        }
     } else {
-        new mapboxgl.Popup()
-        .setLngLat(e.lngLat)
-        .setHTML(`
-        <div class="block-popup"
-            <span class="popup-title">No Inspection History Available</span>
-        </div>
-        `)
-        .addTo(map);
+        if (newData) {
+            new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`
+            <div class="block-popup"
+                <span class="popup-title">No Recent Service Requests</span>
+            </div>
+            `)
+            .addTo(map);
+        } else {
+            new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`
+            <div class="block-popup"
+                <span class="popup-title">No Inspection History Available</span>
+            </div>
+            `)
+            .addTo(map);
+        }
     }
 }
 
