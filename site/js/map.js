@@ -69,12 +69,14 @@ async function initializeMap() {
 async function initializeBlocks(map, newData = false) {
 
     if (map.getLayer('blocks') !== undefined){
+        console.log("clearing block layer");
         map.removeLayer('blocks');
         map.removeLayer('outline');
         map.removeLayer('wards');
         map.removeLayer('ward_outline');
         map.removeSource('blocks-boundary');
         if (map.getLayer('selectedBlock') !== undefined){
+            console.log("in initializeBlocks: clearing selectedBlock");
             map.removeLayer('selectedBlock');
             map.removeSource('selectedBlock');
         }
@@ -84,27 +86,49 @@ async function initializeBlocks(map, newData = false) {
     let blocks = await fetchJSON('https://storage.googleapis.com/rats_app_data/city_blocks.geojson');
     window.blocks = blocks;
 
+    // pull model results
+    let svm_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/SVM_results.json');
+    console.log(svm_results);
+
     let block_results;
 
     // if newData = true, pull new data from storage; otherwise, pull full SVM results
     if (newData) {
+        console.log("in new data case");
         block_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/rodent_2018.geojson');
-        block_results.features = block_results.features.slice(0, 100);
+        block_results.features = block_results.features.slice(100, 200);
         // join recent data to block number in order to visualize 
         block_results = turf.tag(block_results, blocks, 'block_id', 'block_id');
-            // assign rat prob to each block
+
+        // join block results to svm reults to get probs for relevant blocks
+        for (let i in block_results.features) {
+            let probDat = svm_results.filter(function(data) {
+                return data.block_id === block_results.features[i].properties.block_id;
+            });
+            // console.log(probDat);
+            if (probDat[0]) {
+                block_results.features[i].properties.ratProb = probDat[0].Probs;
+            } else {
+                block_results.features[i].properties.ratProb = 0;
+            }
+        }
+
+        console.log(block_results);
+
+        // assign rat prob to each block
         for (let i in blocks.features) {
             let blockDat = block_results.features.filter(function(data) {
-                return data.block_id === blocks.features[i].properties.block_id;
+                return data.properties.block_id === blocks.features[i].properties.block_id;
             });
             if (blockDat[0]) {
-                blocks.features[i].properties.ratProb = blockDat[0].Probs;
+                blocks.features[i].properties.ratProb = blockDat[0].properties.ratProb;
             } else {
                 blocks.features[i].properties.ratProb = 0;
             }
         }
     } else {
-        block_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/SVM_results.json');
+        console.log("in original data case");
+        block_results = svm_results;
             // assign rat prob to each block
         for (let i in blocks.features) {
             let blockDat = block_results.filter(function(data) {
@@ -118,11 +142,9 @@ async function initializeBlocks(map, newData = false) {
         }
     }
     
-
-
-
     //map.on('load', () => {
         console.log("loading blocks");
+        console.log(blocks);
         // Add a data source containing GeoJSON data.
         map.addSource('blocks-boundary', {
             'type': 'geojson',
@@ -146,28 +168,6 @@ async function initializeBlocks(map, newData = false) {
                 'fill-opacity': 0.4
             }
         });
-
-        // 'paint': {
-        //     // 'fill-color': '#0080ff', // blue color fill
-        //     // 'fill-opacity': 0,
-        //     'fill-outline-color': 'rgba(0,0,0,0.1)',
-        //     // 'fill-color': '#627BC1',
-        //     'fill-opacity': 0.1,
-        // },
-
-        // 'paint': {
-        //     'fill-color': [
-        //       'interpolate',
-        //       ['linear'],
-        //       ['get', 'Rat_Count'],
-        //         0, 'rgb(235,59,31)',
-        //         1, 'rgb(243,175,36)',
-        //         2, 'rgb(84,159,40)',
-        //         3, 'rgb(33,86,254)',
-        //         4, 'rgb(31,3,106)'
-        //     ],
-        //     'fill-opacity': 0.4
-        // }
 
         myLayers.push('blocks');
 
@@ -238,6 +238,7 @@ async function initializeBlocks(map, newData = false) {
                 return data.block_id === clicked_block;
             });
         }
+        console.log(clicked_block_info);
         
 
         // $("#geocoder-roof").trigger('change');
