@@ -68,13 +68,13 @@ async function initializeMap() {
 
 async function initializeBlocks(map, newData = false) {
 
-    if (map.getLayer('blocks')){
+    if (map.getLayer('blocks') !== undefined){
         map.removeLayer('blocks');
         map.removeLayer('outline');
         map.removeLayer('wards');
         map.removeLayer('ward_outline');
         map.removeSource('blocks-boundary');
-        if (map.getLayer('selectedBlock')){
+        if (map.getLayer('selectedBlock') !== undefined){
             map.removeLayer('selectedBlock');
             map.removeSource('selectedBlock');
         }
@@ -218,7 +218,7 @@ async function initializeBlocks(map, newData = false) {
 
     // When clicked, show the block information
     map.on('click', 'blocks', (e) => {
-        if (map.getLayer('selectedBlock')){
+        if (map.getLayer('selectedBlock') !== undefined){
             map.removeLayer('selectedBlock');
             map.removeSource('selectedBlock');
             console.log("removing layer");
@@ -355,7 +355,7 @@ $("#select-ward").change(function(){
 
             let feature = wards['features'][i];
 
-            if (typeof map.getLayer('selectedWard') !== "undefined" ){
+            if (map.getLayer('selectedWard') !== undefined){
                 map.removeLayer('selectedWard');
                 map.removeSource('selectedWard');
             }
@@ -388,10 +388,24 @@ $("#select-ward").change(function(){
 // Clear all layers except for the basic layers: ward_outline, wards, blocks-boundary, blocks
 
 function clearLayers(map) {
+    console.log("firing clearLayers");
+    console.log(map.getLayer('selectedBlock'));
+
+    // reset formatting on block and ward layers
+    if (map.getLayer('selectedBlock') !== undefined){
+        console.log("clearLayers: clearing selectedBlock")
+        map.removeLayer("selectedBlock");
+        map.removeSource('selectedBlock');
+    }
+    if (map.getLayer('selectedWard') !== undefined){
+        map.removeLayer('selectedWard');
+        map.removeSource('selectedWard');
+    }
+
     let basic_layers = ['blocks', 'outline', 'wards', 'ward_outline'];
     for (let i = 0; i < myLayers.length; i++) {
         if (basic_layers.indexOf(myLayers[i]) === -1) {
-            if (map.getLayer(myLayers[i])) {
+            if (map.getLayer(myLayers[i]) !== undefined) {
                 map.removeLayer(myLayers[i]);
             }
 
@@ -401,16 +415,6 @@ function clearLayers(map) {
               myLayers.splice(index, 1); // remove the element at the specified index
             }
         }
-    }
-
-    // reset formatting on block and ward layers
-    if (map.getLayer('selectedBlock')){
-        map.removeLayer('selectedBlock');
-        map.removeSource('selectedBlock');
-    }
-    if (map.getLayer('selectedWard')){
-        map.removeLayer('selectedWard');
-        map.removeSource('selectedWard');
     }
 
 }
