@@ -16,7 +16,7 @@ def filter(request):
     client = storage.Client()
     bucket_name = 'rats_app_data'
 
-    raw_blob = client.bucket(bucket_name).blob('311_City_Service_Requests_in_2018.geojson')
+    raw_blob = client.bucket(bucket_name).blob('311_City_Service_Requests_latest.geojson')
     content = raw_blob.download_as_string()
     data = json.loads(content.decode('utf-8')) # Decode the byte string to a regular string
 
@@ -28,7 +28,7 @@ def filter(request):
 
     filtered_data = json.loads(filtered_gdf.to_json())
 
-    file_name = 'rodent_2018.geojson'
+    file_name = 'rodent_latest.geojson'
 
     with open(file_name, 'w') as f:
         json.dump(filtered_data, f)
