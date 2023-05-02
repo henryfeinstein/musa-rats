@@ -7,10 +7,10 @@ const storage = new Storage({
 });
 const bucketName = 'rats_app_data';
 
-const fileName = 'test.geojson';
+const fileName = '311_City_Service_Requests_latest.geojson';
 
-// 311 request data in 2018
-const url = 'https://opendata.arcgis.com/api/v3/datasets/2a46f1f1aad04940b83e75e744eb3b09_9/downloads/data?format=geojson&spatialRefId=4326&where=1%3D1';
+// 311 request data latest
+const url = 'https://opendata.arcgis.com/api/v3/datasets/14faf3d4bfbe4ca4a713bf203a985151_0/downloads/data?format=geojson&spatialRefId=4326&where=1%3D1';
 
 // Create a writable stream to the new file in the bucket
 const file = storage.bucket(bucketName).file(fileName).createWriteStream({
