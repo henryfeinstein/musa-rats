@@ -227,7 +227,7 @@ async function initializeBlocks(map, newData = false) {
     // if newData = true, pull new data from storage; otherwise, pull full SVM results
     if (newData) {
         console.log("in new data case");
-        block_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/rodent_2018.geojson');
+        block_results = await fetchJSON('https://storage.googleapis.com/rats_app_data/rodent_latest.geojson');
         block_results.features = block_results.features.slice(100, 200);
         // join recent data to block number in order to visualize 
         block_results = turf.tag(block_results, blocks, 'block_id', 'block_id');
